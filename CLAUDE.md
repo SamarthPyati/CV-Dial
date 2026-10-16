@@ -144,3 +144,8 @@ python -m eval.evaluate        --run results/<run_id> --split synth-test|real [-
   pixel-centre x. Keypoints that fall outside a crop are written as `0 0 0`.
 - 2026-10-16 — Ultralytics 8.4 defaults to the YOLO26 family; "latest pose checkpoint" = `yolo26n-pose`.
   Seg images are hard-linked (copied if linking fails) into `data/synth_seg/`.
+- 2026-10-16 — Training runs: `results/<name>[_smoke]_<timestamp>/` with `config.yaml` (resolved) and `run.json`
+  (data, weights path, status). Ultralytics output goes to `<run>/ultralytics/`. `--smoke` generates its own tiny
+  dataset inside the run dir and trains from architecture YAMLs / `pretrained: false`, so it never downloads weights.
+- 2026-10-16 — Regression loss: SmoothL1 with beta = 0.02 (in units of f); torch's default beta = 1 would make it
+  plain MSE on f ∈ [0, 1]. Tunable in `configs/train/regress.yaml`.

@@ -1,0 +1,26 @@
+# Model C (S3): ResNet-18 direct regression of f from the 384 px crop (docs/PLAN.md §4).
+# python -m models.train_regress --config configs/train/regress.yaml [--smoke]
+name: regress
+seed: 0
+data:
+  crops_dir: data/synth_crops           # regress_<split>.csv + images/<split>/ from gen.export
+  train_split: train
+  val_split: val
+model:
+  pretrained: true                      # ImageNet weights (torchvision download on first use)
+train:
+  epochs: 30
+  batch: 64
+  lr: 3.0e-4
+  weight_decay: 1.0e-4
+  smooth_l1_beta: 0.02                  # in units of f (2 % FS)
+  workers: 8
+  device: auto                          # auto | cpu | cuda | mps
+augment:
+  fliplr: 0.0                           # INVARIANT: never mirror (CLAUDE.md)
+  jitter: 0.04                          # on-the-fly +/- scale/shift of the crop (on top of export jitter)
+
+smoke:
+  model: {pretrained: false}
+  smoke_data: {n_train: 16, n_val: 8}
+  train: {epochs: 1, batch: 8, workers: 0, device: cpu}

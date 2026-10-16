@@ -68,11 +68,14 @@ Section references point to `docs/PLAN.md`.
 
 ## M5 — Training scripts (§4)
 
-- [ ] `models/train_seg.py`, `models/train_pose.py`, `models/regress_net.py` + `models/train_regress.py`.
+- [x] `models/train_seg.py`, `models/train_pose.py`, `models/regress_net.py` + `models/train_regress.py`.
       YAML config + CLI overrides; `--smoke` runs on ≤ 32 images for 1 epoch on CPU.
       Pose and regression configs hard-code `fliplr: 0.0`; the pose script asserts it at start-up.
       Each run writes `results/<run_id>/` with the resolved config and weights path.
       **AC:** all three `--smoke` runs complete on CPU; a test asserts the pose config has `fliplr == 0`.
+      _2026-10-16: all three smokes pass on CPU (Ultralytics args.yaml confirms fliplr 0 / mosaic 0 for pose).
+      `--smoke` self-generates 16 train + 8 val images and trains from scratch (no weight downloads).
+      Overrides: `--set train.epochs=50`; flip overrides are refused for pose and regression._
 
 ## M6 — Inference pipeline
 

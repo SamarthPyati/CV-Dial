@@ -1,0 +1,20 @@
+# Model A: YOLO-seg dial detector + face segmenter on full images (docs/PLAN.md §4).
+# python -m models.train_seg --config configs/train/seg.yaml [--smoke]
+name: seg
+seed: 0
+model: yolo26n-seg.pt
+data: configs/train/seg_data.yaml
+train:                                  # passed verbatim to ultralytics YOLO.train()
+  imgsz: 640
+  epochs: 60
+  batch: 32
+  close_mosaic: 10
+  fliplr: 0.5                           # flips are allowed for the detector/segmenter
+  patience: 20
+  workers: 8
+  device: null
+
+smoke:
+  model: yolo26n-seg.yaml
+  smoke_data: {n_train: 16, n_val: 8}
+  train: {epochs: 1, batch: 8, imgsz: 320, device: cpu, workers: 0, plots: false}

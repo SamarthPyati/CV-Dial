@@ -1,0 +1,21 @@
+# Model B: YOLO-pose keypoints on 384 px crops (docs/PLAN.md §4).
+# python -m models.train_pose --config configs/train/pose.yaml [--smoke] [--set train.epochs=50]
+name: pose
+seed: 0
+model: yolo26n-pose.pt                  # latest Ultralytics pose checkpoint (downloaded on first use)
+data: configs/train/pose_data.yaml
+train:                                  # passed verbatim to ultralytics YOLO.train()
+  imgsz: 384
+  epochs: 100
+  batch: 64
+  fliplr: 0.0                           # INVARIANT: mirroring swaps min/max and reverses the scale
+  mosaic: 0.0                           # one dial per crop
+  degrees: 10
+  patience: 30
+  workers: 8
+  device: null                          # auto
+
+smoke:
+  model: yolo26n-pose.yaml              # from scratch: no weights download
+  smoke_data: {n_train: 16, n_val: 8}
+  train: {epochs: 1, batch: 8, device: cpu, workers: 0, plots: false}
