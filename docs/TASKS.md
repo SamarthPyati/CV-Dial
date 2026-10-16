@@ -45,7 +45,7 @@ Section references point to `docs/PLAN.md`.
 - [x] Needle parallax: δ ~ U(2 %, 5 %) of radius; pivot/tip projected with `H_needle`.
 - [x] `gen/nuisance.py`: glare (clipped to face region), low light + sensor noise, blur, shadow, camera effects;
       each with an on/off switch and probability in `configs/gen/default.yaml`.
-- [ ] Backgrounds from `data/backgrounds/` with procedural fallback (ask before downloading DTD).
+- [x] Backgrounds from `data/backgrounds/` with procedural fallback (ask before downloading DTD).
 - [x] Multiprocessing; per-image seed = hash(config seed, split, index).
 - [x] `--stratify-obliquity` option producing exactly 500 images per bin for synth-test.
       **AC:** same config + seed ⇒ byte-identical output for 20 sample images; turning one nuisance off
@@ -53,7 +53,8 @@ Section references point to `docs/PLAN.md`.
       _2026-10-16: all ACs pass (tests for 20-image byte identity across worker counts, per-nuisance isolation on
       10 images, glare confined to face). synth-test 2000 = 500/bin. ~0.46 CPU-s/image (20k ≈ 25 min on 10 cores;
       Poisson noise is the largest single cost, fonts are not). Oracle S2 MAE with δ>0: 0.09 → 0.72 % FS by bin.
-      Backgrounds: loader done, `data/backgrounds/` still empty → procedural fallback (DTD download pending approval)._
+      Backgrounds: DTD r1.0.1 downloaded (approved 2026-10-16) → `data/backgrounds/dtd/` (5,640 images, 47 classes);
+      team photos can go in other sub-folders of `data/backgrounds/`._
 
 ## M4 — Export (§3 labels)
 
@@ -79,11 +80,14 @@ Section references point to `docs/PLAN.md`.
 
 ## M6 — Inference pipeline
 
-- [ ] `pipeline/infer.py`: photo → Model A (box, mask) → crop 384 (+15 %) → Model B keypoints →
+- [x] `pipeline/infer.py`: photo → Model A (box, mask) → crop 384 (+15 %) → Model B keypoints →
       S0 / S1 / S2 via `geometry.rectify` → f; Model C → f for S3. Returns, per strategy,
       `{f, linearity_error, status, H}` plus crop, mask and keypoints for visualisation. Never raises on a bad image.
       **AC:** with smoke weights, runs end to end on 5 synthetic images and prints a per-strategy table;
       a missed detection yields `status="fail:no_dial"` for every strategy.
+      _2026-10-16: CLI ran end to end on 5 synth-test images with smoke weights (thresholds lowered via `--set`).
+      Models are injected as adapters (`detect`, `keypoints`, `regress`); oracle adapters recover f exactly (S2,
+      δ = 0) through all frame conversions. no_dial / bad image / adapter exceptions all tested._
 
 ## M7 — Evaluation (§7)
 

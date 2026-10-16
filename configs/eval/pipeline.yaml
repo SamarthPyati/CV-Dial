@@ -1,0 +1,16 @@
+# pipeline.infer settings (photo -> f per strategy). Crop settings must match gen.export.
+weights:                                # paths, or null to leave a model out (its strategies then fail)
+  seg: null
+  pose: null
+  regress: null
+device: cpu
+seg:
+  imgsz: 640
+  conf: 0.25
+pose:
+  imgsz: 384
+  conf: 0.25
+crop:
+  size: 384
+  margin: 0.15
+max_linearity: 0.03                     # S2 linearity gate (tune on synth-val only)
