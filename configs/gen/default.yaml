@@ -103,3 +103,11 @@ nuisance:
     white_balance: [0.93, 1.07]         # per-channel gain
     vignette: [0.0, 0.35]               # corner darkening fraction
     jpeg_quality: [40, 95]
+
+# gen.export: derived YOLO / regression datasets (records stay the source of truth)
+export:
+  crop_size: 384                        # px, square crop fed to Models B and C
+  crop_margin: 0.15                     # square side = max(box w, h) * (1 + margin); same as the pipeline
+  crop_jitter: 0.08                     # +/- scale and position jitter (fraction of the side), training crops
+  seg_dir: data/synth_seg               # YOLO-seg: full images + face polygons
+  crops_dir: data/synth_crops           # YOLO-pose crops + labels, regression CSV

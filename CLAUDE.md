@@ -138,3 +138,9 @@ python -m eval.evaluate        --run results/<run_id> --split synth-test|real [-
   falls in that bin; `--start`/`--n` must be multiples of n_bins. Records carry `obliquity_bin`.
 - 2026-10-16 — `nuisance` record field: {glare, shadow, low_light, blur, jpeg_quality, params}; `make_sample`
   returns the pre-JPEG image, JPEG quality is applied when writing.
+- 2026-10-16 — Crop maths lives in `geometry/crop.py` (`square_crop_box`, `crop_matrix`, `warp_crop`) and is shared by
+  export and the pipeline. Export applies the ±8 % crop jitter only to the `train` split, seeded by the record.
+- 2026-10-16 — Normalised YOLO coordinates use the pixel-edge convention: u = (x + 0.5) / size for our
+  pixel-centre x. Keypoints that fall outside a crop are written as `0 0 0`.
+- 2026-10-16 — Ultralytics 8.4 defaults to the YOLO26 family; "latest pose checkpoint" = `yolo26n-pose`.
+  Seg images are hard-linked (copied if linking fails) into `data/synth_seg/`.

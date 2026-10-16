@@ -57,12 +57,14 @@ Section references point to `docs/PLAN.md`.
 
 ## M4 — Export (§3 labels)
 
-- [ ] `gen/export.py --formats yolo-seg,yolo-pose,regress`:
+- [x] `gen/export.py --formats yolo-seg,yolo-pose,regress`:
       YOLO-seg on full images (face polygon); crops at 384 px from the GT box with ±8 % jitter
       + YOLO-pose labels (`kpt_shape: [7, 3]`) in K0..K6 order; regression CSV (crop path, f, obliquity, id).
       Write the dataset YAMLs into `configs/train/`.
       **AC:** round trip label → denormalised coordinates matches JSON within 0.5 px;
       an Ultralytics `val` call on 10 exported images runs without a dataset error.
+      _2026-10-16: both ACs pass (round trip < 0.5 px for seg + pose; `val` on 10 images with untrained
+      yolo26n-pose/-seg built from YAML, no weights download). Shared crop maths in `geometry/crop.py`._
 
 ## M5 — Training scripts (§4)
 

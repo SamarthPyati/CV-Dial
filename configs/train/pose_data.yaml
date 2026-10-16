@@ -1,0 +1,10 @@
+# Written by gen.export. Relative paths resolve against the repo root (run from there).
+# keypoints: K0 pivot, K1 tip, K2..K6 scale at 0/25/50/75/100 %. No flip_idx: never flip (CLAUDE.md).
+path: data/synth_crops
+train: images/train
+val: images/val
+kpt_shape:
+- 7
+- 3
+names:
+  0: dial
