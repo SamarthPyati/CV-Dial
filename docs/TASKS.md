@@ -91,12 +91,15 @@ Section references point to `docs/PLAN.md`.
 
 ## M7 — Evaluation (§7)
 
-- [ ] `eval/evaluate.py`: predictions.csv + metrics.csv per strategy × bin (MAE, median, ≤ 1 %, ≤ 2.5 %,
+- [x] `eval/evaluate.py`: predictions.csv + metrics.csv per strategy × bin (MAE, median, ≤ 1 %, ≤ 2.5 %,
       failure rate); `--oracle` uses JSON keypoints (and the GT face polygon for S1); `--kp-noise 0,1,2,4`.
-- [ ] `eval/bootstrap.py`: 95 % CI with 1,000 resamples, seeded.
-- [ ] `eval/plots.py`: MAE vs obliquity (5° bins), per-bin bars with CIs, E4 ablation bars, failure gallery.
+- [x] `eval/bootstrap.py`: 95 % CI with 1,000 resamples, seeded.
+- [x] `eval/plots.py`: MAE vs obliquity (5° bins), per-bin bars with CIs, E4 ablation bars, failure gallery.
       **AC:** `--oracle --kp-noise 0` on a δ = 0 synth-test sample gives S2 MAE < 0.01 % FS;
       with δ > 0 the S2 error is non-zero and grows with obliquity; plots render to PNG.
+      _2026-10-16: ACs pass — δ = 0 (400 stratified): S2 MAE 0.000 % FS in every bin; δ > 0 (synth-test 2000):
+      S2 0.085 → 0.717 % FS by bin; all plots render. E1 run in `results/e1/` (σ = 0,1,2,4 px).
+      `gen.generate` gained `--set` overrides (e.g. `pose.delta_frac=[0,0]`)._
 
 ## M8 — Real-data tooling (§6)
 

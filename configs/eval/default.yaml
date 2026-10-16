@@ -1,0 +1,16 @@
+# eval.evaluate defaults (docs/PLAN.md §7). Copied, resolved, into results/<run_id>/config.yaml.
+seed: 0
+splits:                                 # --split name -> directory with records/ and images/
+  synth-test: data/synth/test
+  synth-val: data/synth/val
+  real: data/real
+strategies: [S0, S1, S2, S3]            # oracle mode evaluates the geometric ones only (S0-S2)
+obliquity_bins: [0, 15, 30, 45, 65]     # last bin closed
+tolerances_fs: [1.0, 2.5]               # "within tolerance" shares, % of full scale
+max_linearity: 0.03                     # S2 failure gate (tune on synth-val only)
+bootstrap:
+  resamples: 1000
+  ci: 0.95
+pipeline: configs/eval/pipeline.yaml    # model settings for full-system runs (E2, E3)
+weights: {seg: null, pose: null, regress: null}
+limit: null                             # evaluate only the first N records (debugging)

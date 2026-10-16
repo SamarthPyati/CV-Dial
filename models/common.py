@@ -12,7 +12,7 @@ from pathlib import Path
 import numpy as np
 import yaml
 
-from gen.config import load_config
+from gen.config import apply_overrides, load_config  # noqa: F401  (re-exported)
 
 RESULTS = Path("results")
 
@@ -32,20 +32,6 @@ def deep_update(base: dict, upd: dict) -> dict:
     for k, v in upd.items():
         out[k] = deep_update(out[k], v) if isinstance(v, dict) and isinstance(out.get(k), dict) else copy.deepcopy(v)
     return out
-
-
-def apply_overrides(cfg: dict, pairs: list[str]) -> dict:
-    cfg = copy.deepcopy(cfg)
-    for pair in pairs:
-        key, _, raw = pair.partition("=")
-        if not _:
-            raise ValueError(f"override must be KEY=VALUE, got {pair!r}")
-        node = cfg
-        *path, leaf = key.split(".")
-        for k in path:
-            node = node.setdefault(k, {})
-        node[leaf] = yaml.safe_load(raw)
-    return cfg
 
 
 def resolve_config(path: str, smoke: bool, overrides: list[str]) -> dict:

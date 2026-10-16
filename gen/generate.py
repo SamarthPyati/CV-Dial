@@ -26,7 +26,7 @@ import cv2
 import numpy as np
 import yaml
 
-from gen.config import load_config
+from gen.config import apply_overrides, load_config
 from gen.nuisance import ORDER as NUISANCES
 from gen.nuisance import apply_nuisances
 from gen.pose import face_to_mm, intrinsics_from_hfov, obliquity_deg, plane_homography, sample_pose
@@ -294,8 +294,11 @@ def main() -> None:
     ap.add_argument("--start", type=int, default=0, help="first index (for resuming / sharding)")
     ap.add_argument("--workers", type=int, default=0, help="0 = all CPUs")
     ap.add_argument("--stratify-obliquity", action="store_true", help="equal images per pose.obliquity_bins bin")
+    ap.add_argument("--set", nargs="*", default=[], metavar="KEY=VALUE",
+                    help="config overrides, e.g. pose.delta_frac=[0,0] (saved in <out>/config.yaml)")
     a = ap.parse_args()
-    generate(load_config(a.config), a.split, a.n, Path(a.out), a.start, a.workers, a.stratify_obliquity)
+    cfg = apply_overrides(load_config(a.config), a.set)
+    generate(cfg, a.split, a.n, Path(a.out), a.start, a.workers, a.stratify_obliquity)
 
 
 if __name__ == "__main__":

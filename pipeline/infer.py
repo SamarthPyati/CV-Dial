@@ -17,7 +17,7 @@ from typing import Callable
 import cv2
 import numpy as np
 
-from gen.config import load_config
+from gen.config import apply_overrides, load_config
 from geometry.crop import crop_matrix, square_crop_box, warp_crop
 from geometry.reading import apply_h
 from geometry.rectify import read_strategy
@@ -158,7 +158,6 @@ def main() -> None:
     ap.add_argument("--regress-weights")
     ap.add_argument("--set", nargs="*", default=[], metavar="KEY=VALUE", help="config overrides, e.g. seg.conf=0.1")
     a = ap.parse_args()
-    from models.common import apply_overrides
     cfg = apply_overrides(load_config(a.config), a.set)
     models = load_models(cfg, a.seg_weights, a.pose_weights, a.regress_weights)
     strategies = tuple(a.strategies.split(","))

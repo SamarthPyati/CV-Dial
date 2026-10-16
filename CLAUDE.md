@@ -149,3 +149,9 @@ python -m eval.evaluate        --run results/<run_id> --split synth-test|real [-
   dataset inside the run dir and trains from architecture YAMLs / `pretrained: false`, so it never downloads weights.
 - 2026-10-16 — Regression loss: SmoothL1 with beta = 0.02 (in units of f); torch's default beta = 1 would make it
   plain MSE on f ∈ [0, 1]. Tunable in `configs/train/regress.yaml`.
+- 2026-10-16 — E1 oracle: keypoint noise σ is in **image px**, applied to all 7 keypoints, and is paired (same noise
+  for every strategy on an image). S1 uses the clean GT face polygon (no noise) — this favours S1 under noise;
+  revisit if E1 is meant to perturb the rim too.
+- 2026-10-16 — `eval.evaluate` reuses `results/<run>/config.yaml` when it exists (re-evaluation is reproducible);
+  `--split` accepts a name from `configs/eval/default.yaml` or a directory. Metrics rows: strategy × kp_noise × bin,
+  plus `all`; labels outside the bins go to bin `out`.
