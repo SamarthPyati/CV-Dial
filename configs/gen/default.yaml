@@ -3,7 +3,7 @@ seed: 20261016
 
 image:
   sizes: [[960, 720], [720, 960]]       # (W, H); chosen uniformly
-  jpeg_quality: 95                      # M3 camera nuisance overrides this per image
+  jpeg_quality: 95                      # used only when nuisance.camera is disabled
 
 render:
   size: 1024                            # frontal render, face pixels
@@ -58,8 +58,48 @@ pose:
   roll_sigma_deg: 10
   span_frac: [0.25, 0.70]               # dial diameter / image width
   frame_margin_frac: 0.02               # keep the dial this far inside the image
-  delta_frac: [0.0, 0.0]                # needle plane height, of face radius (v1: 0; v2: [0.02, 0.05])
+  delta_frac: [0.02, 0.05]              # needle plane height above the face, of face radius (parallax)
+  obliquity_bins: [0, 15, 30, 45, 65]   # used by --stratify-obliquity (last bin closed)
 
 background:
-  dir: data/backgrounds                 # used when present (M3); procedural fallback otherwise
-  procedural: true
+  dir: data/backgrounds                 # images (jpg/png, recursive) used when present; procedural fallback otherwise
+  zoom: [1.0, 2.0]                      # extra zoom before the random crop
+
+# Each factor has its own switch (E4 ablations flip `enabled`) and its own random stream,
+# so disabling one never changes the draws of the others. Applied in this order after compositing.
+nuisance:
+  glare:
+    enabled: true
+    p: 0.5
+    peak: [0.3, 0.9]                    # added intensity, fraction of white
+    size_frac: [0.15, 0.6]              # Gaussian sigma (major axis), of face diameter
+    aspect: [1.0, 3.0]
+    streak_prob: 0.3                    # thin streak instead of a blob
+    streak_aspect: [8.0, 20.0]
+  shadow:
+    enabled: true
+    p: 0.3
+    strength: [0.2, 0.6]                # fraction darkened
+    vertices: [3, 7]
+    softness_px: [3, 30]
+  low_light:
+    enabled: true
+    p: 0.3
+    gamma: [1.5, 3.0]
+    gain: [0.3, 0.7]
+    full_well: [150, 1000]              # electrons at white: Poisson shot noise
+    read_noise: [2.0, 8.0]              # Gaussian sigma, 8-bit levels
+  blur:
+    enabled: true
+    p: 0.4
+    motion_prob: 0.5                    # else defocus
+    motion_len_px: [3, 15]
+    defocus_sigma_px: [0.5, 2.5]
+  camera:
+    enabled: true                       # always applied when enabled
+    brightness: [0.85, 1.15]
+    contrast: [0.85, 1.15]
+    saturation: [0.8, 1.2]
+    white_balance: [0.93, 1.07]         # per-channel gain
+    vignette: [0.0, 0.35]               # corner darkening fraction
+    jpeg_quality: [40, 95]

@@ -42,14 +42,18 @@ Section references point to `docs/PLAN.md`.
 
 ## M3 — Generator v2 (§3 step 3)
 
-- [ ] Needle parallax: δ ~ U(2 %, 5 %) of radius; pivot/tip projected with `H_needle`.
-- [ ] `gen/nuisance.py`: glare (clipped to face region), low light + sensor noise, blur, shadow, camera effects;
+- [x] Needle parallax: δ ~ U(2 %, 5 %) of radius; pivot/tip projected with `H_needle`.
+- [x] `gen/nuisance.py`: glare (clipped to face region), low light + sensor noise, blur, shadow, camera effects;
       each with an on/off switch and probability in `configs/gen/default.yaml`.
 - [ ] Backgrounds from `data/backgrounds/` with procedural fallback (ask before downloading DTD).
-- [ ] Multiprocessing; per-image seed = hash(config seed, split, index).
-- [ ] `--stratify-obliquity` option producing exactly 500 images per bin for synth-test.
+- [x] Multiprocessing; per-image seed = hash(config seed, split, index).
+- [x] `--stratify-obliquity` option producing exactly 500 images per bin for synth-test.
       **AC:** same config + seed ⇒ byte-identical output for 20 sample images; turning one nuisance off
       changes only that effect (spot-check 10 images); synth-test has 500 per bin.
+      _2026-10-16: all ACs pass (tests for 20-image byte identity across worker counts, per-nuisance isolation on
+      10 images, glare confined to face). synth-test 2000 = 500/bin. ~0.46 CPU-s/image (20k ≈ 25 min on 10 cores;
+      Poisson noise is the largest single cost, fonts are not). Oracle S2 MAE with δ>0: 0.09 → 0.72 % FS by bin.
+      Backgrounds: loader done, `data/backgrounds/` still empty → procedural fallback (DTD download pending approval)._
 
 ## M4 — Export (§3 labels)
 

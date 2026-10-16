@@ -131,3 +131,10 @@ python -m eval.evaluate        --run results/<run_id> --split synth-test|real [-
 - 2026-10-16 — Needle tips are blunt (≥ 3 face px wide) so the visible end of the needle is exactly K1.
 - 2026-10-16 — With θ ~ U(0, 65°) the obliquity *label* skews high (off-axis framing adds to it); synth-test
   balance comes from `--stratify-obliquity` (M3), not from changing the θ prior.
+- 2026-10-16 — Every random factor of an image (frame, render, pose, background, each nuisance) has its own
+  stream (`gen.generate.stream(seed, name)`); each nuisance draws its on/off decision even when disabled.
+  This is what makes an E4 ablation change only its own effect — keep it that way when adding factors.
+- 2026-10-16 — `--stratify-obliquity` assigns bin = index % n_bins and rejection-samples the pose until the label
+  falls in that bin; `--start`/`--n` must be multiples of n_bins. Records carry `obliquity_bin`.
+- 2026-10-16 — `nuisance` record field: {glare, shadow, low_light, blur, jpeg_quality, params}; `make_sample`
+  returns the pre-JPEG image, JPEG quality is applied when writing.
