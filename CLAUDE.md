@@ -124,3 +124,10 @@ python -m eval.evaluate        --run results/<run_id> --split synth-test|real [-
 - 2026-10-16 — S2 linearity gate default 0.03 lives in `geometry.rectify.DEFAULT_MAX_LINEARITY`; experiment
   configs override it. One scale point off by ~25 px at 40° still passes the gate (~1.3 % FS error) — expected,
   five points give no redundancy.
+- 2026-10-16 — "±10° jitter" in the scale row is applied to the **centring** of the sweep (rotation away from top),
+  not to the sweep size (`render.scale.centre_jitter_deg`).
+- 2026-10-16 — Generator output layout: `<out>/images/<id>.jpg`, `<out>/records/<id>.json`, `<out>/config.yaml`.
+  (`records/`, not `labels/`, so it never collides with YOLO label dirs.)
+- 2026-10-16 — Needle tips are blunt (≥ 3 face px wide) so the visible end of the needle is exactly K1.
+- 2026-10-16 — With θ ~ U(0, 65°) the obliquity *label* skews high (off-axis framing adds to it); synth-test
+  balance comes from `--stratify-obliquity` (M3), not from changing the θ prior.

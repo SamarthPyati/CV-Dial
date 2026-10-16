@@ -1,0 +1,65 @@
+# Synthetic generator defaults (docs/PLAN.md §3). Ranges are [lo, hi] for uniform sampling unless noted.
+seed: 20261016
+
+image:
+  sizes: [[960, 720], [720, 960]]       # (W, H); chosen uniformly
+  jpeg_quality: 95                      # M3 camera nuisance overrides this per image
+
+render:
+  size: 1024                            # frontal render, face pixels
+  dial_radius_frac: 0.47                # outer bezel radius / size
+  face:
+    styles: {light: 0.80, dark: 0.15, colour: 0.05}
+  bezel:
+    styles: {chrome: 0.4, black: 0.35, brass: 0.25}
+    width_frac: [0.03, 0.10]            # of face radius
+  scale:
+    sweeps_deg: [180, 240, 270, 300]
+    sweep_probs: [0.1667, 0.1667, 0.5, 0.1666]
+    centre_jitter_deg: 10               # rotation of the scale centre away from the top
+    tick_ring_frac: [0.70, 0.88]        # of face radius; K2..K6 lie on this arc
+    arc_line_prob: 0.6
+    ticks_inward_prob: 0.7
+    # range -> allowed numbers of major intervals (so 25/50/75 % land on ticks with minor divisions)
+    ranges:
+      - {range: [0, 4], majors: [4, 8]}
+      - {range: [0, 10], majors: [5, 10]}
+      - {range: [0, 16], majors: [4, 8]}
+      - {range: [0, 100], majors: [4, 5, 10]}
+      - {range: [0, 160], majors: [4, 8]}
+      - {range: [-1, 0], majors: [4, 5, 10]}
+    minor_per_major: [2, 10]            # integer range, resampled until 25/50/75 % fall on a tick
+    major_len_frac: [0.07, 0.13]        # of face radius
+    minor_len_frac: [0.03, 0.06]
+    major_width_frac: [0.010, 0.022]
+    zone_prob: 0.3
+  text:
+    fonts: [DejaVuSans.ttf, DejaVuSans-Bold.ttf, DejaVuSerif.ttf, DejaVuSerif-Bold.ttf,
+            DejaVuSansMono-Bold.ttf, STIXGeneral.ttf]   # bundled with matplotlib (mpl-data/fonts/ttf)
+    numeral_size_frac: [0.07, 0.12]     # of face radius
+    units: [bar, psi, "kg/cm²", "°C", MPa, kPa]
+    brand_prob: 0.5
+    brands: [PRECISION, ACME, INDUSTRIAL, MANOMETER, HYDRO, TECHNO, DELTA, PROCESS]
+  needle:
+    styles: {tapered: 0.45, arrow: 0.3, counterweight: 0.25}
+    colours: {black: 0.45, red: 0.4, white: 0.15}
+    length_frac: [0.75, 0.95]           # of tick-ring radius
+    width_frac: [0.025, 0.06]           # base width, of face radius
+    cap_frac: [0.04, 0.10]              # pivot cap radius, of face radius
+  value:
+    outside_prob: 0.05
+    outside_margin: 0.04                # f in [-m, 0) or (1, 1 + m]
+
+pose:
+  face_radius_mm: 50                    # physical face radius; sets M (face px -> mm)
+  hfov_deg: [55, 75]
+  tilt_deg: [0, 65]                     # theta; the label is recomputed from the pose
+  max_obliquity_deg: 65                 # resample poses whose label exceeds this
+  roll_sigma_deg: 10
+  span_frac: [0.25, 0.70]               # dial diameter / image width
+  frame_margin_frac: 0.02               # keep the dial this far inside the image
+  delta_frac: [0.0, 0.0]                # needle plane height, of face radius (v1: 0; v2: [0.02, 0.05])
+
+background:
+  dir: data/backgrounds                 # used when present (M3); procedural fallback otherwise
+  procedural: true

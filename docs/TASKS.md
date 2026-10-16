@@ -30,13 +30,15 @@ Section references point to `docs/PLAN.md`.
 
 ## M2 — Generator v1 (§3 steps 1–2)
 
-- [ ] `gen/render.py`: frontal face + separate needle RGBA layer + canonical keypoints + face circle,
+- [x] `gen/render.py`: frontal face + separate needle RGBA layer + canonical keypoints + face circle,
       covering the parameter table in §3 (fonts bundled under `gen/assets/fonts/`, open licences only).
-- [ ] `gen/generate.py`: pose sampling, warp face (`H_face`) and needle (`H_needle`, δ = 0 in v1),
+- [x] `gen/generate.py`: pose sampling, warp face (`H_face`) and needle (`H_needle`, δ = 0 in v1),
       composite on a plain/procedural background, write image + JSON record (schema in §3).
-- [ ] `gen/preview.py`: contact sheet of N images with the 7 projected keypoints drawn and labelled K0–K6.
+- [x] `gen/preview.py`: contact sheet of N images with the 7 projected keypoints drawn and labelled K0–K6.
       **AC:** 100 images generate without error; preview shows keypoints on the right features;
       on these δ = 0 images, `read(gt_kp, s2)` recovers the JSON `f` to < 1e-4; obliquity labels span 0–65°.
+      _2026-10-16: 100 images OK (~0.33 CPU-s/image); S2 max |Δf| 1e-15; obliquity 1.6–64.7°; preview checked at
+      full res. Multiprocessing + per-image seed already in place. Records live in `<out>/records/<id>.json`._
 
 ## M3 — Generator v2 (§3 step 3)
 
