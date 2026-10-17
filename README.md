@@ -24,3 +24,16 @@ Regenerate the pinned file after changing dependencies:
 ```bash
 uv export --no-hashes --no-emit-project --format requirements-txt -o requirements.txt
 ```
+
+## Demo
+
+```bash
+uv run python -m pipeline.demo_app                    # no weights: synthetic examples only (GT keypoints)
+uv run python -m pipeline.demo_app \
+    --seg-weights results/<seg_run>/ultralytics/weights/best.pt \
+    --pose-weights results/<pose_run>/ultralytics/weights/best.pt \
+    --regress-weights results/<regress_run>/weights/best.pt [--share]
+```
+
+Opens on http://127.0.0.1:7860. `--share` gives a temporary public link (e.g. to use a phone camera).
+The headline reading uses S2 and falls back to S1 only in the demo; the table always shows every strategy.

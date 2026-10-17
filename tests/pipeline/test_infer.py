@@ -5,9 +5,7 @@ import pytest
 
 from gen.config import load_config
 from gen.generate import make_sample
-from geometry.crop import crop_matrix, square_crop_box
-from geometry.reading import apply_h
-from pipeline.infer import STRATEGIES, Models, format_table, infer
+from pipeline.infer import STRATEGIES, Models, format_table, infer, oracle_models
 
 CFG = load_config("configs/eval/pipeline.yaml")
 GEN = load_config("configs/gen/default.yaml")
@@ -15,19 +13,10 @@ FLAT = copy.deepcopy(GEN)
 FLAT["pose"]["delta_frac"] = [0.0, 0.0]
 
 
-def oracle_models(rec: dict) -> Models:
-    """Adapters that return ground truth: exercises every frame conversion in the pipeline."""
-    A = crop_matrix(*square_crop_box(rec["bbox"], CFG["crop"]["margin"]), CFG["crop"]["size"])
-    kp = apply_h(A, np.asarray(rec["keypoints"])[:, :2])
-    return Models(detect=lambda img: (np.asarray(rec["bbox"]), np.asarray(rec["face_polygon"])),
-                  keypoints=lambda crop: (kp, np.ones(7)),
-                  regress=lambda crop: rec["f"])
-
-
 @pytest.mark.parametrize("index", range(5))
 def test_oracle_pipeline_recovers_f(index):
     img, rec = make_sample(FLAT, "test", index, stratify=True)
-    res = infer(img, oracle_models(rec), CFG)
+    res = infer(img, oracle_models(rec, CFG), CFG)
     s = res["strategies"]
     assert all(s[k]["status"] == "ok" for k in STRATEGIES), {k: v["status"] for k, v in s.items()}
     assert abs(s["S2"]["f"] - rec["f"]) < 1e-6                   # exact: flat needle, true keypoints
@@ -60,7 +49,7 @@ def test_adapter_exception_is_contained():
 
 def test_missing_keypoints_and_models():
     img, rec = make_sample(GEN, "test", 2)
-    m = oracle_models(rec)
+    m = oracle_models(rec, CFG)
     res = infer(img, Models(detect=m.detect, keypoints=lambda c: None, regress=None), CFG)
     s = res["strategies"]
     assert {s[k]["status"] for k in ("S0", "S1", "S2")} == {"fail:no_keypoints"}

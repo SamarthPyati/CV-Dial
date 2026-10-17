@@ -113,9 +113,12 @@ Section references point to `docs/PLAN.md`.
 
 ## M9 — Demo
 
-- [ ] `pipeline/demo_app.py` (Gradio): upload photo → overlay keypoints, rectified dial, readings for
+- [x] `pipeline/demo_app.py` (Gradio): upload photo → overlay keypoints, rectified dial, readings for
       S0–S3, with the S2 → S1 fallback **only here**; shows printed value if the user enters the scale range.
       **AC:** launches locally and handles a photo with no dial gracefully.
+      _2026-10-17: launched on localhost and driven via gradio_client: blank photo → "No dial found", all
+      strategies `fail:no_dial`. Synthetic-example mode (GT keypoints) works before any training; S3 in that mode
+      uses only a real model. Rectified view is rotated so K4 points up (similarity, reading unchanged)._
 
 ## M10 — E4 ablation configs
 

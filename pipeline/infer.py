@@ -97,6 +97,18 @@ def _infer(image, models, cfg, strategies, out) -> None:
                                        "status": "ok", "H": None}
 
 
+def oracle_models(rec: dict, cfg: dict) -> Models:
+    """Adapters that return a record's ground truth (box, face polygon, keypoints, f).
+
+    Used by the demo's synthetic examples and by tests: every frame conversion in `infer` still runs.
+    """
+    A = crop_matrix(*square_crop_box(rec["bbox"], cfg["crop"]["margin"]), cfg["crop"]["size"])
+    kp = apply_h(A, np.asarray(rec["keypoints"], float)[:, :2])
+    box, poly = np.asarray(rec["bbox"], float), np.asarray(rec["face_polygon"], float)
+    return Models(detect=lambda img: (box, poly), keypoints=lambda crop: (kp, np.ones(len(kp))),
+                  regress=lambda crop: float(rec["f"]))
+
+
 # ---- real model adapters -----------------------------------------------------------------------
 
 def load_models(cfg: dict, seg: str | None = None, pose: str | None = None, regress: str | None = None) -> Models:

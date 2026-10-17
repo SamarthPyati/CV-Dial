@@ -161,3 +161,6 @@ python -m eval.evaluate        --run results/<run_id> --split synth-test|real [-
   pixel-edge coordinates get −0.5 to match our pixel-centre frame. Order: cvat_to_json → aruco_angle → evaluate.
 - 2026-10-17 — Real records store `obliquity_bin` as an int index like synthetic ones, plus `obliquity_method`
   (aruco | ellipse | none). Expect ~±0.8° label noise from a 40 mm marker; photos near a bin edge may land either side.
+- 2026-10-17 — Demo (`pipeline/demo_app.py`): logic in plain functions (`analyse`, `display_matrix`) tested without a
+  browser; Gradio only wires them. Synthetic-example mode uses `pipeline.infer.oracle_models` (GT box/mask/keypoints)
+  but S3 only from a real model. `oracle_models` lives in `pipeline/infer.py` and is shared with the tests.
