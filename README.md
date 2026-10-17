@@ -35,5 +35,5 @@ uv run python -m pipeline.demo_app \
     --regress-weights results/<regress_run>/weights/best.pt [--share]
 ```
 
-Opens on http://127.0.0.1:7860. `--share` gives a temporary public link (e.g. to use a phone camera).
+Opens on the first free port from 7860 (the URL is printed; pin one with `--port`). `--share` gives a temporary public link (e.g. to use a phone camera).
 The headline reading uses S2 and falls back to S1 only in the demo; the table always shows every strategy.

@@ -197,7 +197,7 @@ def main() -> None:
     ap.add_argument("--seg-weights")
     ap.add_argument("--pose-weights")
     ap.add_argument("--regress-weights")
-    ap.add_argument("--port", type=int, default=7860)
+    ap.add_argument("--port", type=int, default=None, help="default: first free port from 7860")
     ap.add_argument("--share", action="store_true", help="public Gradio link (for presenting from another device)")
     a = ap.parse_args()
     cfg = load_config(a.config)
