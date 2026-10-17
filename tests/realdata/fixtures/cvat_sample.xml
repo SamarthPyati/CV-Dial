@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Hand-written CVAT for images 1.1 export. IMG_0001: frontal 0-10 bar gauge reading 4.2 (radius 300 px,
+     270 deg sweep). IMG_0002: same state, K6 marked outside. IMG_0003: rim missing (must be skipped). -->
+<annotations>
+  <version>1.1</version>
+  <image id="0" name="IMG_0001.jpg" width="1000" height="1000">
+    <box label="dial" source="manual" occluded="0" xtl="110.0" ytl="110.0" xbr="891.0" ybr="891.0" z_order="0"></box>
+    <skeleton label="gauge" source="manual" z_order="0">
+      <points label="K0" source="manual" outside="0" occluded="0" points="500.50,500.50"></points>
+      <points label="K1" source="manual" outside="0" occluded="0" points="408.47,268.06"></points>
+      <points label="K2" source="manual" outside="0" occluded="0" points="288.37,712.63"></points>
+      <points label="K3" source="manual" outside="0" occluded="0" points="223.34,385.69"></points>
+      <points label="K4" source="manual" outside="0" occluded="0" points="500.50,200.50"></points>
+      <points label="K5" source="manual" outside="0" occluded="0" points="777.66,385.69"></points>
+      <points label="K6" source="manual" outside="0" occluded="0" points="712.63,712.63"></points>
+    </skeleton>
+    <points label="rim" source="manual" occluded="0" points="880.50,500.50;769.20,769.20;500.50,880.50;231.80,769.20;120.50,500.50;231.80,231.80;500.50,120.50;769.20,231.80" z_order="0"></points>
+  </image>
+  <image id="1" name="IMG_0002.jpg" width="1200" height="900">
+    <box label="dial" source="manual" occluded="0" xtl="200" ytl="100" xbr="700" ybr="800" z_order="0"></box>
+    <skeleton label="gauge" source="manual" z_order="0">
+      <points label="K6" source="manual" outside="1" occluded="0" points="690.0,700.0"></points>
+      <points label="K0" source="manual" outside="0" occluded="0" points="450.0,450.0"></points>
+      <points label="K1" source="manual" outside="0" occluded="0" points="400.0,300.0"></points>
+      <points label="K2" source="manual" outside="0" occluded="0" points="300.0,650.0"></points>
+      <points label="K3" source="manual" outside="0" occluded="0" points="260.0,400.0"></points>
+      <points label="K4" source="manual" outside="0" occluded="0" points="450.0,220.0"></points>
+      <points label="K5" source="manual" outside="0" occluded="0" points="640.0,400.0"></points>
+    </skeleton>
+    <polygon label="rim" source="manual" occluded="0" points="700,450;630,640;450,710;270,640;200,450;270,260;450,190;630,260" z_order="0"></polygon>
+  </image>
+  <image id="2" name="IMG_0003.jpg" width="1000" height="1000">
+    <box label="dial" source="manual" occluded="0" xtl="110" ytl="110" xbr="890" ybr="890" z_order="0"></box>
+  </image>
+</annotations>

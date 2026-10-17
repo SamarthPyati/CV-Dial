@@ -37,7 +37,9 @@ METRIC_FIELDS = ["strategy", "kp_noise", "bin", "n", "n_ok", "failure_rate", "ma
 
 
 def bin_label(obl: float, edges) -> str:
-    """'lo-hi' for the bin containing obl; the last bin is closed. Outside the edges -> 'out'."""
+    """'lo-hi' for the bin containing obl; the last bin is closed. Outside the edges or unlabelled -> 'out'."""
+    if obl is None:
+        return "out"
     for k in range(len(edges) - 1):
         lo, hi = edges[k], edges[k + 1]
         if lo <= obl < hi or (k == len(edges) - 2 and obl == hi):

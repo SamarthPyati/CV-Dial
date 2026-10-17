@@ -1,0 +1,14 @@
+# Real test-set tooling (docs/PLAN.md §6). data/real/ is TEST ONLY (CLAUDE.md invariant 3).
+# Layout: data/real/{images/, records/, annotations/, calib/<phone>.yaml}
+calibration:
+  pattern: [9, 6]                       # inner corners (cols, rows) of the printed checkerboard
+  square_mm: 25.0
+aruco:
+  dictionary: DICT_4X4_50
+  marker_size_m: 0.04                   # printed side length, taped coplanar with the dial face
+  max_reproj_px: 2.0                    # above this the marker is "unusable" -> ellipse fallback
+cvat:
+  keypoint_labels: [K0, K1, K2, K3, K4, K5, K6]   # skeleton point labels, in this order
+  box_label: dial
+  rim_label: rim                        # >= 5 points on the face rim (points / polyline / polygon)
+  polygon_points: 64                    # face_polygon is resampled from the fitted rim ellipse

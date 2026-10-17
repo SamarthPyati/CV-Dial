@@ -103,10 +103,13 @@ Section references point to `docs/PLAN.md`.
 
 ## M8 — Real-data tooling (§6)
 
-- [ ] `realdata/calibrate.py`, `realdata/aruco_angle.py` (with the arccos(b/a) fallback and a `method` column),
+- [x] `realdata/calibrate.py`, `realdata/aruco_angle.py` (with the arccos(b/a) fallback and a `method` column),
       `realdata/cvat_to_json.py` producing records in the synthetic schema.
       **AC:** on a synthetic render with a rendered ArUco marker coplanar to the dial,
       `aruco_angle.py` recovers obliquity within 1°; `cvat_to_json.py` round-trips a hand-written sample export.
+      _2026-10-17: ACs pass — ArUco error ≤ 0.77° over 5–65° (40 mm marker at 300–450 mm; reprojection ≤ 0.15 px);
+      ellipse fallback within ~2°. CVAT fixture in `tests/realdata/fixtures/` round-trips every coordinate and
+      reads f = 0.42 back from the converted keypoints. Calibration recovers fx within 1 % from rendered boards._
 
 ## M9 — Demo
 

@@ -155,3 +155,9 @@ python -m eval.evaluate        --run results/<run_id> --split synth-test|real [-
 - 2026-10-16 — `eval.evaluate` reuses `results/<run>/config.yaml` when it exists (re-evaluation is reproducible);
   `--split` accepts a name from `configs/eval/default.yaml` or a directory. Metrics rows: strategy × kp_noise × bin,
   plus `all`; labels outside the bins go to bin `out`.
+- 2026-10-17 — Real data layout: `data/real/{images/, records/, annotations/, calib/<phone>.yaml}`. Reading sheets
+  are two CSVs: `states.csv` (state_id, gauge_id, min, max, units, value_a, value_b — label = mean of the two
+  readers) and `images.csv` (image, state_id, phone). CVAT export format: "CVAT for images 1.1" XML; CVAT's
+  pixel-edge coordinates get −0.5 to match our pixel-centre frame. Order: cvat_to_json → aruco_angle → evaluate.
+- 2026-10-17 — Real records store `obliquity_bin` as an int index like synthetic ones, plus `obliquity_method`
+  (aruco | ellipse | none). Expect ~±0.8° label noise from a 40 mm marker; photos near a bin edge may land either side.
