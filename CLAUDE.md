@@ -170,3 +170,6 @@ python -m eval.evaluate        --run results/<run_id> --split synth-test|real [-
 - 2026-10-23 — `low_tilt_0_10` follows the spec literally (θ ∈ [0, 10°]); obliquity labels still reach ~30° because
   off-axis framing adds to θ. Limiting the *label* to 10° would also need `pose.max_obliquity_deg: 10` (two keys) —
   team decision.
+- 2026-10-23 — Colab training: `notebooks/train_colab.ipynb` only calls the repo scripts. It installs just
+  `ultralytics==8.4.178` on top of Colab's own torch/OpenCV (no requirements.txt reinstall), links `results/` to
+  `MyDrive/cv-dial/results/`, and unzips data to local disk. Keep logic in scripts; edit it in Jupyter/Colab.

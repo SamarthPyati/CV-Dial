@@ -37,3 +37,10 @@ uv run python -m pipeline.demo_app \
 
 Opens on the first free port from 7860 (the URL is printed; pin one with `--port`). `--share` gives a temporary public link (e.g. to use a phone camera).
 The headline reading uses S2 and falls back to S1 only in the demo; the table always shows every strategy.
+
+## Training on Colab
+
+`notebooks/train_colab.ipynb` trains all three models on a Colab GPU and runs the E2 evaluation.
+Open it in Colab (File → Upload notebook), set the runtime to GPU and follow the first cell:
+it expects `cv-dial-src.zip` (`git archive -o cv-dial-src.zip HEAD`) and `cv-dial-data.zip`
+(generated + exported data) in `MyDrive/cv-dial/`. Results are written to `MyDrive/cv-dial/results/`.
