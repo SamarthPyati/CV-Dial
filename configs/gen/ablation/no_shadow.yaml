@@ -1,0 +1,5 @@
+# E4 ablation: cast shadows off.
+# Everything else comes from the base config (docs/PLAN.md §7, TASKS M10).
+base: ../default.yaml
+overrides:
+  nuisance.shadow.enabled: false

@@ -164,3 +164,9 @@ python -m eval.evaluate        --run results/<run_id> --split synth-test|real [-
 - 2026-10-17 — Demo (`pipeline/demo_app.py`): logic in plain functions (`analyse`, `display_matrix`) tested without a
   browser; Gradio only wires them. Synthetic-example mode uses `pipeline.infer.oracle_models` (GT box/mask/keypoints)
   but S3 only from a real model. `oracle_models` lives in `pipeline/infer.py` and is shared with the tests.
+- 2026-10-23 — Derived configs: a YAML with `base: <relative path>` + `overrides: {dotted.key: value}` is resolved by
+  `gen.config.load_config` (recursively). E4 ablations in `configs/gen/ablation/` use this, one key each.
+  `gen.ablation` keeps split = "train" and the same seed, so each ablated image is its default twin minus one effect.
+- 2026-10-23 — `low_tilt_0_10` follows the spec literally (θ ∈ [0, 10°]); obliquity labels still reach ~30° because
+  off-axis framing adds to θ. Limiting the *label* to 10° would also need `pose.max_obliquity_deg: 10` (two keys) —
+  team decision.

@@ -122,9 +122,13 @@ Section references point to `docs/PLAN.md`.
 
 ## M10 — E4 ablation configs
 
-- [ ] Five configs in `configs/gen/ablation/` (no_glare, no_low_light, no_blur, no_shadow, low_tilt_0_10),
+- [x] Five configs in `configs/gen/ablation/` (no_glare, no_low_light, no_blur, no_shadow, low_tilt_0_10),
       each differing from default in exactly one switch, plus a script that generates each training set.
       **AC:** a test diffs each ablation config against default and finds exactly one changed key.
+      _2026-10-23: AC passes. Ablations are overlays (`base: ../default.yaml` + one `overrides` key) resolved by
+      `gen.config.load_config`, so they cannot drift from default. `python -m gen.ablation --n 20000` generates and
+      exports (pose + regress) each set, paired with the default training set, validates on the default synth-val,
+      and prints the E4 training commands. Note: low_tilt_0_10 limits θ, but labels still reach ~30° (off-axis framing)._
 
 ## Later / only if asked
 
