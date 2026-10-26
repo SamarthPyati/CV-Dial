@@ -7,10 +7,22 @@ on/off decision first, so switching one factor off never changes what the others
 
 from __future__ import annotations
 
+from functools import lru_cache
+
 import cv2
 import numpy as np
 
 ORDER = ("glare", "shadow", "low_light", "blur", "camera")
+POISSON_EXACT_BELOW = 30.0   # expected electrons; above this shot noise is sampled as N(lam, lam)
+
+
+@lru_cache(maxsize=8)
+def _vignette_r2(H: int, W: int) -> np.ndarray:
+    """Squared distance from the image centre, normalised to 1 at the corners (read-only, cached per size)."""
+    yy, xx = np.mgrid[0:H, 0:W].astype(np.float32)
+    r2 = ((xx - W / 2) ** 2 + (yy - H / 2) ** 2) / ((W / 2) ** 2 + (H / 2) ** 2)
+    r2.setflags(write=False)
+    return r2
 
 
 def _u(rng, lo_hi) -> float:
@@ -30,14 +42,18 @@ def glare(img, rng, cfg, face_mask, face_poly):
     peak = _u(rng, cfg["peak"]) * 255
     tint = rng.uniform(0.92, 1.0, 3)
 
-    yy, xx = np.mgrid[0:H, 0:W].astype(np.float32)
+    # The highlight is clipped to the face, so it is only evaluated inside the face's bounding box.
+    x0, y0 = np.maximum(np.floor(lo).astype(int) - 1, 0)
+    x1, y1 = np.minimum(np.ceil(hi).astype(int) + 2, [W, H])
+    yy, xx = np.mgrid[y0:y1, x0:x1].astype(np.float32)
     dx, dy = xx - centre[0], yy - centre[1]
     u = dx * np.cos(a) + dy * np.sin(a)
     v = -dx * np.sin(a) + dy * np.cos(a)
     s_u, s_v = sigma, sigma / aspect
     g = np.exp(-0.5 * ((u / s_u) ** 2 + (v / s_v) ** 2))
-    out = img + (peak * g * face_mask)[..., None] * tint
-    return np.clip(out, 0, 255), {"streak": streak, "peak": peak / 255}
+    out = img.copy()
+    out[y0:y1, x0:x1] += (peak * g * face_mask[y0:y1, x0:x1])[..., None] * tint.astype(np.float32)
+    return np.clip(out, 0, 255, out=out), {"streak": streak, "peak": peak / 255}
 
 
 def shadow(img, rng, cfg):
@@ -60,10 +76,15 @@ def low_light(img, rng, cfg):
     """Gamma + gain darkening, then Poisson shot noise and Gaussian read noise."""
     gamma, gain = _u(rng, cfg["gamma"]), _u(rng, cfg["gain"])
     full_well, read = _u(rng, cfg["full_well"]), _u(rng, cfg["read_noise"])
-    x = gain * (np.clip(img, 0, 255) / 255.0) ** gamma
-    electrons = rng.poisson(x * full_well).astype(np.float32)
-    out = electrons / full_well * 255 + rng.normal(0, read, img.shape).astype(np.float32)
-    return np.clip(out, 0, 255), {"gamma": gamma, "gain": gain}
+    lam = (full_well * gain) * (np.clip(img, 0, 255) * (1 / 255.0)) ** gamma      # expected electrons
+    k = np.float32(255 / full_well)                                               # electrons -> 8-bit levels
+    # Shot noise (variance lam) + read noise (variance read^2) are independent, so above POISSON_EXACT_BELOW
+    # electrons they are drawn as one Gaussian with the summed variance. Dark pixels keep exact Poisson draws.
+    out = lam * k + np.sqrt(lam * (k * k) + np.float32(read * read)) * rng.standard_normal(lam.shape, dtype=np.float32)
+    dark = lam < POISSON_EXACT_BELOW
+    if dark.any():
+        out[dark] = rng.poisson(lam[dark]) * k + np.float32(read) * rng.standard_normal(int(dark.sum()), dtype=np.float32)
+    return np.clip(out, 0, 255, out=out), {"gamma": gamma, "gain": gain}
 
 
 def blur(img, rng, cfg):
@@ -94,9 +115,7 @@ def camera(img, rng, cfg):
     grey = out @ np.array([0.299, 0.587, 0.114], np.float32)
     out = grey[..., None] + (out - grey[..., None]) * s
     out = out * wb
-    yy, xx = np.mgrid[0:H, 0:W].astype(np.float32)
-    r2 = ((xx - W / 2) ** 2 + (yy - H / 2) ** 2) / ((W / 2) ** 2 + (H / 2) ** 2)
-    out = out * (1 - vig * r2)[..., None]
+    out = out * (1 - vig * _vignette_r2(H, W))[..., None]
     return np.clip(out, 0, 255), {"jpeg_quality": q}
 
 

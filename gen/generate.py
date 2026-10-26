@@ -166,7 +166,10 @@ def _prescale(dial: Dial, H: np.ndarray) -> tuple[float, np.ndarray]:
 
 
 def composite(dial: Dial, cam: dict, bg: np.ndarray) -> np.ndarray:
-    """Warp the face (H_face) and needle (H_needle) layers and alpha-composite onto bg. Returns float32 RGB."""
+    """Warp the face (H_face) and needle (H_needle) layers and alpha-composite onto bg. Returns float32 RGB.
+
+    Only the dial's bounding box (+2 px) is warped and blended; everything outside it is background anyway.
+    """
     Himg, Wimg = bg.shape[:2]
     s, S = _prescale(dial, cam["H_face"])
     size = max(8, round(dial.face.shape[0] * s))
@@ -180,14 +183,22 @@ def composite(dial: Dial, cam: dict, bg: np.ndarray) -> np.ndarray:
     na = dial.needle[..., 3:4].astype(np.float32) / 255.0
     needle_pm = prep(np.concatenate([dial.needle[..., :3].astype(np.float32) * na, na], axis=2))
 
+    outline = np.vstack([apply_h(cam["H_face"], circle(dial.centre, dial.dial_radius)),
+                         apply_h(cam["H_needle"], circle(dial.centre, dial.dial_radius))])
+    x0, y0 = np.maximum(np.floor(outline.min(0)).astype(int) - 2, 0)
+    x1, y1 = np.minimum(np.ceil(outline.max(0)).astype(int) + 3, [Wimg, Himg])
+    T = np.array([[1.0, 0, -x0], [0, 1.0, -y0], [0, 0, 1]])                 # image px -> ROI px
+
     def warp(img, H):
-        return cv2.warpPerspective(img, H @ Si, (Wimg, Himg), flags=cv2.INTER_LINEAR,
+        return cv2.warpPerspective(img, T @ H @ Si, (int(x1 - x0), int(y1 - y0)), flags=cv2.INTER_LINEAR,
                                    borderMode=cv2.BORDER_CONSTANT, borderValue=0)
 
     fw, nw = warp(face_pm, cam["H_face"]), warp(needle_pm, cam["H_needle"])
-    out = bg * (1 - fw[..., 3:4]) + fw[..., :3]
-    out = out * (1 - nw[..., 3:4]) + nw[..., :3]
-    return np.clip(out, 0, 255).astype(np.float32)
+    out = bg.astype(np.float32, copy=True)
+    roi = out[y0:y1, x0:x1]
+    roi = roi * (1 - fw[..., 3:4]) + fw[..., :3]
+    out[y0:y1, x0:x1] = roi * (1 - nw[..., 3:4]) + nw[..., :3]
+    return np.clip(out, 0, 255, out=out)
 
 
 def face_mask(poly: np.ndarray, W: int, H: int) -> np.ndarray:
