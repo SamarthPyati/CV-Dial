@@ -1,0 +1,4 @@
+# pipeline.infer settings for GPU machines (Kaggle / Colab); identical to pipeline.yaml except the device.
+base: pipeline.yaml
+overrides:
+  device: cuda:0

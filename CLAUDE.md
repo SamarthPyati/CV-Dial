@@ -177,3 +177,8 @@ python -m eval.evaluate        --run results/<run_id> --split synth-test|real [-
   shot + read noise as one Gaussian above 30 expected electrons and exact Poisson below
   (`gen.nuisance.POISSON_EXACT_BELOW`). ~1.3x faster per image (84 ms on one M4 core; 24k images ≈ 10 min on
   10 cores). Records are unchanged; low-light pixels differ only by their random draws. synth-test regenerated.
+- 2026-10-28 — Kaggle training: `notebooks/train_kaggle.ipynb` runs one job per GPU (GPU 0: seg; GPU 1: pose → regress)
+  instead of DDP — nano models and 4 CPUs make two independent jobs the better use of 2 × T4. `FAST` (default on)
+  shortens the schedule via `--set` only (seg 20 ep @ 512, pose 40 ep, regress 10 ep). Code and data are used from
+  `/tmp` / `/kaggle/input`; only `results/` is linked into `/kaggle/working`, so data is never saved as output.
+  `configs/eval/pipeline_gpu.yaml` = pipeline.yaml with `device: cuda:0`.

@@ -44,3 +44,11 @@ The headline reading uses S2 and falls back to S1 only in the demo; the table al
 Open it in Colab (File → Upload notebook), set the runtime to GPU and follow the first cell:
 it expects `cv-dial-src.zip` (`git archive -o cv-dial-src.zip HEAD`) and `cv-dial-data.zip`
 (generated + exported data) in `MyDrive/cv-dial/`. Results are written to `MyDrive/cv-dial/results/`.
+
+## Training on Kaggle (2 × T4)
+
+`notebooks/train_kaggle.ipynb` uses both GPUs at once: the segmenter on GPU 0, keypoints then regression on GPU 1,
+then the E2 evaluation. Upload `cv-dial-src.zip` and `cv-dial-data.zip` as a Kaggle dataset, add it as input,
+set *Accelerator: GPU T4 x2* and *Internet: On*, then run all (or *Save & Run All* to run unattended).
+`FAST = True` (default) trains a shortened schedule in about 1.5 h end to end; `FAST = False` uses the spec
+defaults (about 3.5–5 h). Results land in the notebook's Output tab, also zipped as `cv-dial-results.zip`.
