@@ -182,3 +182,6 @@ python -m eval.evaluate        --run results/<run_id> --split synth-test|real [-
   shortens the schedule via `--set` only (seg 20 ep @ 512, pose 40 ep, regress 10 ep). Code and data are used from
   `/tmp` / `/kaggle/input`; only `results/` is linked into `/kaggle/working`, so data is never saved as output.
   `configs/eval/pipeline_gpu.yaml` = pipeline.yaml with `device: cuda:0`.
+- 2026-10-28 — Kaggle `/kaggle/input` reads ~0.2 MB/s per file: training from it spent ~24 min before and ~70 min
+  in Ultralytics' label scan. The Kaggle notebook now copies the data to `/tmp/cv-dial-data` first with 64 parallel
+  file copies (skipped if already copied in the session), so scans/caches run on local, writable disk.
