@@ -66,6 +66,7 @@ cv-dial/
 ├── pipeline/        infer.py (photo → f per strategy), demo_app.py (Gradio)
 ├── realdata/        calibrate.py, aruco_angle.py, cvat_to_json.py
 ├── eval/            evaluate.py, bootstrap.py, plots.py
+├── scripts/         demo.py (one-command demo: newest trained weights from results/)
 ├── tests/           mirrors the package layout
 ├── data/            git-ignored: synth/{train,val,test}, real/, backgrounds/
 └── results/         one folder per run: config.yaml, metrics.csv, plots/
@@ -198,3 +199,6 @@ python -m eval.evaluate        --run results/<run_id> --split synth-test|real [-
   range value (EN 837 / psi preferred numbers, 0 preferred) near the fit. Labelled "read" or "inferred".
   On 160 cached synthetic dials: read 37 ok / 0 wrong, inferred 36 ok / 3 wrong, 84 declined; clean large dials
   28 ok / 0 wrong / 4 declined. Thresholds in `configs/eval/pipeline.yaml: scale_ocr`. Never imported by `eval/`.
+- 2026-10-29 — `python -m scripts.demo` = demo with automatic weights: `models.common.latest_weights(name)` picks the
+  newest run under results/ whose run.json says "done" and whose weights file exists (smoke runs skipped);
+  explicit `--*-weights` win. `pipeline.demo_app` keeps explicit paths only and shares `add_launch_args`/`launch`.

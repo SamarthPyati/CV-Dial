@@ -250,8 +250,7 @@ def build_app(models: Models, cfg: dict, gen_cfg: dict, scale_reader=None):
     return app
 
 
-def main() -> None:
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+def add_launch_args(ap: argparse.ArgumentParser) -> None:
     ap.add_argument("--config", default="configs/eval/pipeline.yaml")
     ap.add_argument("--gen-config", default="configs/gen/default.yaml")
     ap.add_argument("--seg-weights")
@@ -260,7 +259,10 @@ def main() -> None:
     ap.add_argument("--port", type=int, default=None, help="default: first free port from 7860")
     ap.add_argument("--no-ocr", action="store_true", help="do not read the scale range from the dial numerals")
     ap.add_argument("--share", action="store_true", help="public Gradio link (for presenting from another device)")
-    a = ap.parse_args()
+
+
+def launch(a: argparse.Namespace) -> None:
+    """Build and serve the demo from parsed launch arguments (see add_launch_args)."""
     cfg = load_config(a.config)
     models = load_models(cfg, a.seg_weights, a.pose_weights, a.regress_weights)
     reader = None
@@ -273,6 +275,12 @@ def main() -> None:
             print("Scale OCR off: install it with `uv sync --extra ocr` to read the range from the dial.")
     app = build_app(models, cfg, load_config(a.gen_config), reader)
     app.launch(server_port=a.port, share=a.share, head=PASTE_JS)
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    add_launch_args(ap)
+    launch(ap.parse_args())
 
 
 if __name__ == "__main__":

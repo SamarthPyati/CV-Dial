@@ -52,3 +52,30 @@ def test_regress_smoke_run(tmp_path, monkeypatch):
     run = train_regress.train(cfg, "t")
     assert (run / "weights" / "best.pt").exists() and (run / "config.yaml").exists()
     assert "best_val_mae_fs" in (run / "run.json").read_text()
+
+
+def test_latest_weights_skips_smoke_and_unfinished(tmp_path):
+    import json
+    import os
+    import time
+    from models.common import latest_weights
+
+    def run(name, status="done", with_weights=True, age=0):
+        d = tmp_path / name
+        (d / "weights").mkdir(parents=True)
+        w = d / "weights" / "best.pt"
+        if with_weights:
+            w.write_bytes(b"x")
+        (d / "run.json").write_text(json.dumps({"status": status, "weights": str(w)}))
+        t = time.time() - age
+        os.utime(d / "run.json", (t, t))
+        return w
+
+    old = run("pose_20261020-100000", age=300)
+    run("pose_smoke_20261030-100000")                       # newest, but a smoke run
+    run("pose_20261029-100000", status="running")           # unfinished
+    run("pose_20261029-110000", with_weights=False)         # weights file missing
+    assert latest_weights("pose", tmp_path) == old
+    newer = run("pose_20261028-100000", age=100)
+    assert latest_weights("pose", tmp_path) == newer
+    assert latest_weights("seg", tmp_path) is None

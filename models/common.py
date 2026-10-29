@@ -79,3 +79,23 @@ def make_smoke_data(root: Path, formats: tuple[str, ...], n_train: int, n_val: i
         generate(cfg, split, n, root / "synth" / split, workers=1)
         export(root / "synth" / split, formats, cfg, split=split, workers=1, yaml_dir=root / "yamls")
     return cfg["export"]
+
+
+def latest_weights(name: str, results: Path | None = None) -> Path | None:
+    """Weights of the newest finished, non-smoke run of `name` (seg | pose | regress) under results/, or None.
+
+    A run counts when its run.json says status "done" and the weights file it names exists.
+    """
+    results = RESULTS if results is None else Path(results)
+    runs = []
+    for info_path in results.glob(f"{name}_*/run.json"):
+        if "_smoke_" in info_path.parent.name:
+            continue
+        try:
+            info = json.loads(info_path.read_text())
+        except (OSError, json.JSONDecodeError):
+            continue
+        weights = Path(info.get("weights", ""))
+        if info.get("status") == "done" and weights.is_file():
+            runs.append((info_path.stat().st_mtime, info_path.parent.name, weights))
+    return max(runs)[2] if runs else None

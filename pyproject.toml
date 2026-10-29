@@ -28,7 +28,7 @@ requires = ["setuptools>=69"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["gen*", "geometry*", "models*", "pipeline*", "realdata*", "eval*"]
+include = ["gen*", "geometry*", "models*", "pipeline*", "realdata*", "eval*", "scripts*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
