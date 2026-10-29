@@ -190,3 +190,11 @@ python -m eval.evaluate        --run results/<run_id> --split synth-test|real [-
   The renderer now forbids black-on-dark as well as white-on-light, and records `face_rgb` in `render`.
   Light-faced images are byte-identical; dark-faced ones change needle colour only. The first Kaggle models
   (`results/*_20261028-*`) were trained on the old data; synth-test v1 is kept in `data/synth/test_v1`.
+- 2026-10-29 — Demo-only scale-range OCR (`pipeline/scale_ocr.py`, optional extra `ocr`: RapidOCR 3.10 + ONNX
+  Runtime). Chosen over EasyOCR (removed): similar accuracy on 80 synthetic dials (34/10/36 vs 39/11/30
+  correct/wrong/none with the prototype rule) but ~6x faster start, ~25 % faster per patch, 350 MB vs 1.2 GB RAM, no
+  model download. Method: rectified upright view -> OCR patches at K2..K6 -> numerals placed by angle (q) -> robust
+  line value = lo + q (hi - lo) needing >= 3 agreeing numerals; ends are the numeral read there or a standard
+  range value (EN 837 / psi preferred numbers, 0 preferred) near the fit. Labelled "read" or "inferred".
+  On 160 cached synthetic dials: read 37 ok / 0 wrong, inferred 36 ok / 3 wrong, 84 declined; clean large dials
+  28 ok / 0 wrong / 4 declined. Thresholds in `configs/eval/pipeline.yaml: scale_ocr`. Never imported by `eval/`.

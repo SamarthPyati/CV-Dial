@@ -65,3 +65,26 @@ def test_rectified_view_puts_k4_up_and_keeps_the_reading():
 
 def test_app_builds():
     assert build_app(Models(), CFG, GEN) is not None
+
+
+def test_scale_range_priority_and_messages():
+    from pipeline.scale_ocr import ScaleRange
+    img, rec = synthetic_example(GEN, 0, "15-30")
+    models = oracle_models(rec, CFG)
+    calls = []
+
+    def reader(image, res, strategy):
+        calls.append(strategy)
+        return ScaleRange(lo=0.0, hi=200.0, read_ends=True, numerals=[(0, 0, 1), (0.5, 100, 1), (1, 200, 1)])
+
+    _, _, rows, md = analyse(img, models, CFG, None, None, scale_reader=reader)          # range read from the dial
+    s2 = next(r for r in rows if r[0] == "S2")
+    assert calls == ["S2"] and s2[2] == pytest.approx(200 * s2[1], abs=200 * 5e-5) and "read from 3 numerals" in md
+    _, _, rows, md = analyse(img, models, CFG, 0, 10, scale_reader=reader)              # typed range wins
+    s2 = next(r for r in rows if r[0] == "S2")
+    assert calls == ["S2"] and s2[2] == pytest.approx(10 * s2[1], abs=10 * 5e-5) and "entered" in md
+    _, _, rows, md = analyse(img, models, CFG, None, None, scale_reader=lambda *a: None)   # nothing readable
+    assert all(r[2] is None for r in rows) and "Could not read the scale numbers" in md
+    inferred = ScaleRange(lo=0.0, hi=16.0, read_ends=False, numerals=[(0, 0, 1), (0.25, 4, 1), (0.5, 8, 1)])
+    _, _, _, md = analyse(img, models, CFG, None, None, scale_reader=lambda *a: inferred)
+    assert "inferred" in md and "check" in md

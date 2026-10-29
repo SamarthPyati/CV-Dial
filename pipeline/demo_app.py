@@ -1,8 +1,9 @@
 """Gradio demo: photo -> keypoints, rectified dial, readings for S0-S3 (PLAN §1, TASKS M9).
 
-    python -m pipeline.demo_app [--seg-weights W --pose-weights W --regress-weights W] [--port 7860] [--share]
+    python -m pipeline.demo_app [--seg-weights W --pose-weights W --regress-weights W] [--port 7860] [--share] [--no-ocr]
 
-Upload or take a photo; optionally enter the printed scale range to see the value as well as f.
+Upload, paste or take a photo. The value is computed from the scale range: typed min/max win; otherwise (with the
+optional `ocr` extra) the range is read from the dial's numerals by pipeline.scale_ocr - demo only, never in eval.
 Without trained weights the app still runs "synthetic examples": generator images read with their
 ground-truth keypoints (oracle adapters), so the geometry can be shown before models are trained.
 
@@ -19,7 +20,7 @@ import numpy as np
 
 from gen.config import load_config
 from geometry.reading import apply_h
-from pipeline.infer import STRATEGIES, Models, infer, load_models, oracle_models
+from pipeline.infer import STRATEGIES, Models, infer, load_models, oracle_models, upright_matrix
 
 RECT_SIZE = 480
 KP_NAMES = ["K0 pivot", "K1 tip", "K2 0%", "K3 25%", "K4 50%", "K5 75%", "K6 100%"]
@@ -98,22 +99,9 @@ def overlay(image: np.ndarray, res: dict) -> np.ndarray:
     return out
 
 
-def display_matrix(res: dict, strategy: str | None) -> np.ndarray | None:
-    """Crop px -> display px: the strategy's H followed by a similarity (angles unchanged) that centres the pivot,
-    fixes the scale-ring radius and turns the 50 % mark (K4) straight up, as the dial would be read."""
-    if strategy is None or res["crop"] is None or res["keypoints"] is None:
-        return None
-    H = res["strategies"][strategy]["H"]
-    r = apply_h(H, res["keypoints"])
-    radius = float(np.mean(np.linalg.norm(r[2:] - r[0], axis=1)))
-    if not np.isfinite(radius) or radius <= 0:
-        return None
-    s = 0.36 * RECT_SIZE / radius
-    d = r[4] - r[0]
-    rot = -np.pi / 2 - np.arctan2(d[1], d[0])                                          # K4 -> up (y down)
-    S = np.array([[s * np.cos(rot), -s * np.sin(rot), 0.0], [s * np.sin(rot), s * np.cos(rot), 0.0], [0, 0, 1.0]])
-    S[:2, 2] = (RECT_SIZE - 1) / 2 - S[:2, :2] @ r[0]
-    return S @ H
+def display_matrix(res: dict, strategy: str | None, size: int = RECT_SIZE) -> np.ndarray | None:
+    """Crop px -> display px (see pipeline.infer.upright_matrix)."""
+    return upright_matrix(res, strategy, size)
 
 
 def rectified_view(res: dict, strategy: str | None) -> np.ndarray | None:
@@ -137,9 +125,32 @@ def _value(f: float, vmin, vmax) -> float | None:
     return float(vmin) + f * (float(vmax) - float(vmin))
 
 
+def _fmt(v: float) -> str:
+    return f"{v:.6g}"
+
+
+def scale_note(entered: bool, scale, reader_on: bool) -> str:
+    """One line saying where the min/max used for the value came from."""
+    if entered:
+        return "Scale range: entered."
+    if scale is not None and scale.read_ends:
+        return (f"Scale range **{_fmt(scale.lo)} – {_fmt(scale.hi)}**, read from {len(scale.numerals)} numerals "
+                "on the dial. Type min/max to override.")
+    if scale is not None:
+        return (f"Scale range **≈ {_fmt(scale.lo)} – {_fmt(scale.hi)}**, *inferred* from {len(scale.numerals)} "
+                "numerals (an end value was not readable) — please check it, or type min/max.")
+    if reader_on:
+        return "Could not read the scale numbers: type min and max to get the value."
+    return "Type the scale's min and max to get the value (automatic reading needs `uv sync --extra ocr`)."
+
+
 def analyse(image: np.ndarray | None, models: Models, cfg: dict, vmin=None, vmax=None,
-            truth: dict | None = None) -> tuple[np.ndarray | None, np.ndarray | None, list[list], str]:
-    """Run the pipeline and build the demo outputs: (overlay, rectified, table rows, markdown summary)."""
+            truth: dict | None = None, scale_reader=None) -> tuple[np.ndarray | None, np.ndarray | None, list[list], str]:
+    """Run the pipeline and build the demo outputs: (overlay, rectified, table rows, markdown summary).
+
+    The value uses the entered min/max; otherwise, if a scale_reader is given (demo-only OCR), the range read
+    from the dial's numerals.
+    """
     if image is None:
         return None, None, [], "Upload or take a photo of an analog gauge."
     if image.ndim == 2:
@@ -147,6 +158,12 @@ def analyse(image: np.ndarray | None, models: Models, cfg: dict, vmin=None, vmax
     image = image[..., :3]
     res = infer(image, models, cfg)
     used, f = demo_reading(res)
+    entered = vmin is not None and vmax is not None and vmin != vmax
+    scale = None
+    if not entered and scale_reader is not None and used is not None:
+        scale = scale_reader(image, res, used)
+        if scale is not None:
+            vmin, vmax = scale.lo, scale.hi
     rows = []
     for s in STRATEGIES:
         r = res["strategies"][s]
@@ -161,9 +178,9 @@ def analyse(image: np.ndarray | None, models: Models, cfg: dict, vmin=None, vmax
         v = _value(f, vmin, vmax)
         reading = f"**{v:.3g}** (f = {f:.3f})" if v is not None else f"f = **{f:.3f}** of full scale"
         note = "" if used == "S2" else " — S2 failed, showing the S1 fallback (demo only)"
-        md = f"### Reading: {reading}\nUsing {used}{note}."
+        md = f"### Reading: {reading}\nUsing {used}{note}. {scale_note(entered, scale, scale_reader is not None)}"
     if truth is not None:
-        tv = _value(truth["f"], vmin, vmax)
+        tv = _value(truth["f"], *truth["range"])                     # the dial's true range, not the detected one
         md += (f"\n\nSynthetic example, ground-truth keypoints · true f = {truth['f']:.3f}"
                f"{'' if tv is None else f' (value {tv:.3g})'} · obliquity {truth['obliquity_deg']:.1f}°")
     return overlay(image, res), rectified_view(res, used), rows, md
@@ -177,7 +194,7 @@ def synthetic_example(gen_cfg: dict, index: int, bin_name: str) -> tuple[np.ndar
     return make_sample(gen_cfg, "demo", int(index) * (len(BIN_EDGES) - 1) + k, stratify=True)
 
 
-def build_app(models: Models, cfg: dict, gen_cfg: dict):
+def build_app(models: Models, cfg: dict, gen_cfg: dict, scale_reader=None):
     import gradio as gr
 
     has_models = models.detect is not None
@@ -194,8 +211,8 @@ def build_app(models: Models, cfg: dict, gen_cfg: dict):
                 photo = gr.Image(type="numpy", label="Photo  (upload, webcam, or paste with Ctrl/⌘+V)",
                                  sources=["upload", "webcam", "clipboard"], elem_id="photo")
                 with gr.Row():
-                    vmin = gr.Number(label="Scale min (optional)", value=None)
-                    vmax = gr.Number(label="Scale max (optional)", value=None)
+                    vmin = gr.Number(label="Scale min (blank: read from dial)", value=None)
+                    vmax = gr.Number(label="Scale max (blank: read from dial)", value=None)
                 read_btn = gr.Button("Read gauge", variant="primary")
                 with gr.Accordion("Synthetic example (ground-truth keypoints)", open=not has_models):
                     with gr.Row():
@@ -216,15 +233,15 @@ def build_app(models: Models, cfg: dict, gen_cfg: dict):
             return m
 
         def on_read(img, lo, hi, rec):
-            return analyse(img, example_models(rec) if rec is not None else models, cfg, lo, hi, rec)
+            return analyse(img, example_models(rec) if rec is not None else models, cfg, lo, hi, rec, scale_reader)
 
         def on_example(b, i, lo, hi):
             img, rec = synthetic_example(gen_cfg, i, b)
-            return (img, rec, *analyse(img, example_models(rec), cfg, lo, hi, rec))
+            return (img, rec, *analyse(img, example_models(rec), cfg, lo, hi, rec, scale_reader))
 
         def on_upload(img, lo, hi):
             # An uploaded or pasted photo is read straight away, always with the real models.
-            return (None, *analyse(img, models, cfg, lo, hi))
+            return (None, *analyse(img, models, cfg, lo, hi, scale_reader=scale_reader))
 
         read_btn.click(on_read, [photo, vmin, vmax, truth], [over, rect, table, summary])
         photo.input(lambda: None, None, truth)                  # a user-changed photo is never read with oracle keypoints
@@ -241,11 +258,21 @@ def main() -> None:
     ap.add_argument("--pose-weights")
     ap.add_argument("--regress-weights")
     ap.add_argument("--port", type=int, default=None, help="default: first free port from 7860")
+    ap.add_argument("--no-ocr", action="store_true", help="do not read the scale range from the dial numerals")
     ap.add_argument("--share", action="store_true", help="public Gradio link (for presenting from another device)")
     a = ap.parse_args()
     cfg = load_config(a.config)
     models = load_models(cfg, a.seg_weights, a.pose_weights, a.regress_weights)
-    build_app(models, cfg, load_config(a.gen_config)).launch(server_port=a.port, share=a.share, head=PASTE_JS)
+    reader = None
+    if not a.no_ocr:
+        from pipeline import scale_ocr
+        if scale_ocr.available():
+            reader = scale_ocr.ScaleReader(cfg["scale_ocr"])
+            reader._ocr(np.full((32, 32, 3), 255, np.uint8))              # load the OCR models now, not on first photo
+        else:
+            print("Scale OCR off: install it with `uv sync --extra ocr` to read the range from the dial.")
+    app = build_app(models, cfg, load_config(a.gen_config), reader)
+    app.launch(server_port=a.port, share=a.share, head=PASTE_JS)
 
 
 if __name__ == "__main__":

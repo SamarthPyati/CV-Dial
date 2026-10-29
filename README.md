@@ -38,6 +38,17 @@ uv run python -m pipeline.demo_app \
 Opens on the first free port from 7860 (the URL is printed; pin one with `--port`). Paste an image anywhere on the page with Ctrl/⌘+V, or upload one: it is read immediately. `--share` gives a temporary public link (e.g. to use a phone camera).
 The headline reading uses S2 and falls back to S1 only in the demo; the table always shows every strategy.
 
+**Reading the scale range automatically (demo only).** Install the optional OCR extra once:
+
+```bash
+uv sync --extra ocr          # RapidOCR + ONNX Runtime, models bundled (no download). Note: a plain `uv sync` removes it.
+```
+
+With it, leaving *Scale min/max* blank makes the demo read the range from the dial's printed numerals and say how
+sure it is: **read** (both end numerals seen) or **inferred** (an end extrapolated from the other numerals —
+check it). If it can't read enough numerals it asks you to type the range; a typed range always wins.
+`--no-ocr` turns it off. OCR is never used in the experiments (`eval/` does not import it).
+
 ## Training on Colab
 
 `notebooks/train_colab.ipynb` trains all three models on a Colab GPU and runs the E2 evaluation.

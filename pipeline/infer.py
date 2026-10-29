@@ -97,6 +97,27 @@ def _infer(image, models, cfg, strategies, out) -> None:
                                        "status": "ok", "H": None}
 
 
+def upright_matrix(res: dict, strategy: str | None, size: int) -> np.ndarray | None:
+    """Crop px -> upright dial px (size x size): the strategy's H, then a similarity (angles unchanged) that centres
+    the pivot, sets the scale-ring radius to 0.36 * size and turns the 50 % mark (K4) straight up.
+
+    Compose with res["crop_matrix"] to map photo px instead. None if the strategy has no usable H.
+    """
+    if strategy is None or res["crop"] is None or res["keypoints"] is None or res["strategies"][strategy]["H"] is None:
+        return None
+    H = res["strategies"][strategy]["H"]
+    r = apply_h(H, res["keypoints"])
+    radius = float(np.mean(np.linalg.norm(r[2:] - r[0], axis=1)))
+    if not np.isfinite(radius) or radius <= 0:
+        return None
+    s = 0.36 * size / radius
+    d = r[4] - r[0]
+    rot = -np.pi / 2 - np.arctan2(d[1], d[0])                                          # K4 -> up (y down)
+    S = np.array([[s * np.cos(rot), -s * np.sin(rot), 0.0], [s * np.sin(rot), s * np.cos(rot), 0.0], [0, 0, 1.0]])
+    S[:2, 2] = (size - 1) / 2 - S[:2, :2] @ r[0]
+    return S @ H
+
+
 def oracle_models(rec: dict, cfg: dict) -> Models:
     """Adapters that return a record's ground truth (box, face polygon, keypoints, f).
 

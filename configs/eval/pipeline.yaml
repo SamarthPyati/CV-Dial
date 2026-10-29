@@ -14,3 +14,13 @@ crop:
   size: 384
   margin: 0.15
 max_linearity: 0.03                     # S2 linearity gate (tune on synth-val only)
+scale_ocr:                              # DEMO ONLY (pipeline/demo_app.py) - never used by eval.evaluate
+  view_size: 1000                       # upright rectified dial rendered from the full-resolution photo, px
+  patch_radii: [0.72, 1.18]             # numeral search patches around K2..K6, as a fraction of the scale-ring radius
+  patch_half: 0.24                      # patch half-size, fraction of the ring radius
+  upscale: 3                            # patches are enlarged before OCR (small numerals)
+  min_conf: 0.3                         # OCR confidence floor for a numeral
+  min_numerals: 3                       # numerals that must agree on value = min + q (max - min)
+  tol: 0.02                             # agreement tolerance, fraction of the span
+  ends_window: 0.06                     # |q| or |q - 1| below this counts as the min / max numeral itself
+  min_spread: 0.45                      # agreeing numerals must cover at least this much of the scale
