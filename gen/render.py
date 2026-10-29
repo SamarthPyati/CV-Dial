@@ -266,8 +266,11 @@ def render_dial(rng: np.random.Generator, cfg: dict) -> Dial:
     # ---- needle layer -------------------------------------------------------------------------
     nd = cfg["needle"]
     n_style = _choice(rng, nd["styles"])
+    # The needle must stand out from the face: no white needle on a light face, no black needle on a dark one
+    # (an invisible needle is unreadable for any method; E2 v1 showed 29 of its 30 worst errors were black-on-dark).
     light_face = _luma(face_rgb) > 0.5
-    colours = {k: v for k, v in nd["colours"].items() if not (k == "white" and light_face)}
+    colours = {k: v for k, v in nd["colours"].items()
+               if not (k == "white" and light_face) and not (k == "black" and not light_face)}
     n_colour = _choice(rng, colours)
     rgb = {"black": (20, 20, 22), "red": (205, 25, 25), "white": (238, 238, 235)}[n_colour]
     L = _u(rng, nd["length_frac"]) * r_t
@@ -297,7 +300,8 @@ def render_dial(rng: np.random.Generator, cfg: dict) -> Dial:
         "f": f, "value": lo + f * (hi - lo), "range": [lo, hi], "units": unit,
         "sweep_deg": sweep, "start_deg": float(start),
         "style": {
-            "face": face_style, "bezel": bezel_style, "needle": n_style, "needle_colour": n_colour,
+            "face": face_style, "face_rgb": list(face_rgb), "bezel": bezel_style,
+            "needle": n_style, "needle_colour": n_colour,
             "font": font, "n_major": n_major, "n_minor": n_minor, "ticks_inward": inward,
             "zones": [z[0] for z in zones], "brand": brand,
         },

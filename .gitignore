@@ -21,3 +21,6 @@ weights/
 
 # macOS
 .DS_Store
+
+# Transfer archives (Kaggle/Colab uploads and downloads)
+/*.zip

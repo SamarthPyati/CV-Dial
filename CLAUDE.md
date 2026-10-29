@@ -185,3 +185,8 @@ python -m eval.evaluate        --run results/<run_id> --split synth-test|real [-
 - 2026-10-28 — Kaggle `/kaggle/input` reads ~0.2 MB/s per file: training from it spent ~24 min before and ~70 min
   in Ultralytics' label scan. The Kaggle notebook now copies the data to `/tmp/cv-dial-data` first with 64 parallel
   file copies (skipped if already copied in the session), so scans/caches run on local, writable disk.
+- 2026-10-29 — Generator bug fixed: black needles were allowed on dark faces (invisible needle). In E2 v1 they were
+  29 of the 30 errors > 20 % FS (that group's MAE 11.6 % FS vs ~0.5–0.7 % elsewhere) and 6.7 % of the training set.
+  The renderer now forbids black-on-dark as well as white-on-light, and records `face_rgb` in `render`.
+  Light-faced images are byte-identical; dark-faced ones change needle colour only. The first Kaggle models
+  (`results/*_20261028-*`) were trained on the old data; synth-test v1 is kept in `data/synth/test_v1`.

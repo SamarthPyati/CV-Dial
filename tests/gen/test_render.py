@@ -40,3 +40,17 @@ def test_value_matches_f_and_range():
         lo, hi = m["range"]
         assert m["value"] == pytest.approx(lo + m["f"] * (hi - lo))
         assert -0.04 <= m["f"] <= 1.04
+
+
+def test_needle_contrasts_with_face():
+    """No invisible needles: black needles never sit on dark faces, white ones never on light faces."""
+    from gen.render import _luma
+    seen = set()
+    for s in range(400):
+        d = render_dial(np.random.default_rng(1000 + s), CFG)
+        st = d.meta["style"]
+        face_luma = _luma(st["face_rgb"])                                       # base colour of the face
+        seen.add((st["face"], st["needle_colour"]))
+        assert not (st["needle_colour"] == "black" and face_luma <= 0.5), (s, st)
+        assert not (st["needle_colour"] == "white" and face_luma > 0.5), (s, st)
+    assert ("dark", "red") in seen and ("light", "black") in seen
