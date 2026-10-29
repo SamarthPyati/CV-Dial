@@ -35,7 +35,7 @@ uv run python -m pipeline.demo_app \
     --regress-weights results/<regress_run>/weights/best.pt [--share]
 ```
 
-Opens on the first free port from 7860 (the URL is printed; pin one with `--port`). `--share` gives a temporary public link (e.g. to use a phone camera).
+Opens on the first free port from 7860 (the URL is printed; pin one with `--port`). Paste an image anywhere on the page with Ctrl/⌘+V, or upload one: it is read immediately. `--share` gives a temporary public link (e.g. to use a phone camera).
 The headline reading uses S2 and falls back to S1 only in the demo; the table always shows every strategy.
 
 ## Training on Colab

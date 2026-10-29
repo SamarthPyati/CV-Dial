@@ -26,6 +26,43 @@ KP_NAMES = ["K0 pivot", "K1 tip", "K2 0%", "K3 25%", "K4 50%", "K5 75%", "K6 100
 KP_COLOURS = [(255, 0, 255), (255, 40, 40), (0, 170, 0), (0, 170, 170), (0, 120, 255), (200, 160, 0), (120, 0, 200)]
 BIN_EDGES = [0, 15, 30, 45, 65]
 
+# Ctrl/Cmd+V anywhere on the page: an image on the clipboard is handed to the Photo component's own file input,
+# so Gradio treats it exactly like an upload (and fires `upload`). Text pastes are left alone.
+PASTE_JS = """
+<script>
+(() => {
+  const waitFor = (sel, ms) => new Promise((resolve) => {
+    const t0 = Date.now();
+    const tick = () => {
+      const el = document.querySelector(sel);
+      if (el || Date.now() - t0 > ms) resolve(el); else setTimeout(tick, 50);
+    };
+    tick();
+  });
+  document.addEventListener("paste", async (event) => {
+    const items = Array.from((event.clipboardData && event.clipboardData.items) || []);
+    const item = items.find((i) => i.kind === "file" && i.type.startsWith("image/"));
+    if (!item) return;
+    event.preventDefault();
+    const blob = item.getAsFile();
+    const ext = (blob.type.split("/")[1] || "png").replace("jpeg", "jpg");
+    const file = new File([blob], `pasted-${Date.now()}.${ext}`, { type: blob.type });
+    let input = document.querySelector("#photo input[type=file]");
+    if (!input) {                                   // a photo is already shown: clear it to get the upload input back
+      const clear = document.querySelector("#photo button[aria-label='Clear'], #photo button[title='Clear']");
+      if (clear) clear.click();
+      input = await waitFor("#photo input[type=file]", 2000);
+    }
+    if (!input) { console.warn("gauge demo: photo upload input not found"); return; }
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    input.files = dt.files;
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+})();
+</script>
+"""
+
 
 def demo_reading(res: dict) -> tuple[str | None, float]:
     """(strategy used, f): S2, falling back to S1. Demo only - experiments never fall back."""
@@ -154,7 +191,8 @@ def build_app(models: Models, cfg: dict, gen_cfg: dict):
         truth = gr.State(None)
         with gr.Row():
             with gr.Column():
-                photo = gr.Image(type="numpy", label="Photo", sources=["upload", "webcam", "clipboard"])
+                photo = gr.Image(type="numpy", label="Photo  (upload, webcam, or paste with Ctrl/⌘+V)",
+                                 sources=["upload", "webcam", "clipboard"], elem_id="photo")
                 with gr.Row():
                     vmin = gr.Number(label="Scale min (optional)", value=None)
                     vmax = gr.Number(label="Scale max (optional)", value=None)
@@ -184,8 +222,13 @@ def build_app(models: Models, cfg: dict, gen_cfg: dict):
             img, rec = synthetic_example(gen_cfg, i, b)
             return (img, rec, *analyse(img, example_models(rec), cfg, lo, hi, rec))
 
+        def on_upload(img, lo, hi):
+            # An uploaded or pasted photo is read straight away, always with the real models.
+            return (None, *analyse(img, models, cfg, lo, hi))
+
         read_btn.click(on_read, [photo, vmin, vmax, truth], [over, rect, table, summary])
         photo.input(lambda: None, None, truth)                  # a user-changed photo is never read with oracle keypoints
+        photo.upload(on_upload, [photo, vmin, vmax], [truth, over, rect, table, summary])
         ex_btn.click(on_example, [bin_dd, idx, vmin, vmax], [photo, truth, over, rect, table, summary])
     return app
 
@@ -202,7 +245,7 @@ def main() -> None:
     a = ap.parse_args()
     cfg = load_config(a.config)
     models = load_models(cfg, a.seg_weights, a.pose_weights, a.regress_weights)
-    build_app(models, cfg, load_config(a.gen_config)).launch(server_port=a.port, share=a.share)
+    build_app(models, cfg, load_config(a.gen_config)).launch(server_port=a.port, share=a.share, head=PASTE_JS)
 
 
 if __name__ == "__main__":
