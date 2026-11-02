@@ -7,6 +7,11 @@
 \usetikzlibrary{arrows.meta,positioning}
 \usepackage{url}
 
+% Start a new row of author blocks (IEEEtran puts all authors in one row by default).
+\makeatletter
+\newcommand{\linebreakand}{\end{@IEEEauthorhalign}\hfill\mbox{}\par\mbox{}\hfill\begin{@IEEEauthorhalign}}
+\makeatother
+
 % Visible placeholder for results that do not exist yet or decisions the authors must make.
 \newcommand{\todo}[1]{\textcolor{red}{\textbf{[TODO: #1]}}}
 
@@ -18,16 +23,16 @@ Prof.\ Dr.~Ramakrishnan Varadharajan.}}
 
 \author{%
 \IEEEauthorblockN{Samarth Pyati}
-\IEEEauthorblockA{1RVU23CSE400\\RV University, Bengaluru, India}
+\IEEEauthorblockA{1RVU23CSE400\\School of Computer Science and Engineering (SoCSE)\\RV University, Bengaluru, India\\samarthsp.btech23@rvu.edu.in}
 \and
 \IEEEauthorblockN{Amit Narendra}
-\IEEEauthorblockA{1RVU23CSE042\\RV University, Bengaluru, India}
-\and
+\IEEEauthorblockA{1RVU23CSE042\\School of Computer Science and Engineering (SoCSE)\\RV University, Bengaluru, India\\amitcnarendra.btech23@rvu.edu.in}
+\linebreakand
 \IEEEauthorblockN{Pranathi Manalithara}
-\IEEEauthorblockA{1RVU23CSE343\\RV University, Bengaluru, India}
+\IEEEauthorblockA{1RVU23CSE343\\School of Computer Science and Engineering (SoCSE)\\RV University, Bengaluru, India\\pranathim.btech23@rvu.edu.in}
 \and
 \IEEEauthorblockN{Rishab A.\,V.}
-\IEEEauthorblockA{1RVU23CSE375\\RV University, Bengaluru, India}}
+\IEEEauthorblockA{1RVU23CSE375\\School of Computer Science and Engineering (SoCSE)\\RV University, Bengaluru, India\\rishabha.btech23@rvu.edu.in}}
 
 \maketitle
 
