@@ -12,8 +12,6 @@
 \newcommand{\linebreakand}{\end{@IEEEauthorhalign}\hfill\mbox{}\par\mbox{}\hfill\begin{@IEEEauthorhalign}}
 \makeatother
 
-% Visible placeholder for results that do not exist yet or decisions the authors must make.
-\newcommand{\todo}[1]{\textcolor{red}{\textbf{[TODO: #1]}}}
 
 \begin{document}
 
@@ -49,8 +47,10 @@ without correction has a mean error that grows from 0.45 to 4.16\,\%\,FS between
 45--65$^\circ$ bins, while S1, S2 and S3 reach 0.57, 0.61 and 0.72\,\%\,FS overall and stay at or below
 1.12\,\%\,FS in every bin. With ground-truth keypoints S2 is exact on a flat dial, but once the needle sits above the face the pivot is
 no longer on the dial plane and S2 loses its advantage: with trained models S1 is slightly more accurate than S2
-(paired difference 0.04\,\%\,FS). These results
-are synthetic; the evaluation on real photographs, which is the main intended result, is pending.
+(paired difference 0.04\,\%\,FS). On 298 openly licensed real photographs, which carry no ground-truth readings,
+the synthetic-trained detector finds the dial in 62\,\% of images; close-up single-scale gauges are read
+plausibly, while secondary marker pointers and dual scales cause failures. A quantitative evaluation on labelled
+real photographs is left for future work.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -74,8 +74,8 @@ nuisance switches and a stratified test set (Sec.~\ref{sec:data});
 \item a pipeline in which the four strategies S0--S3 differ only in tilt handling (Sec.~\ref{sec:method});
 \item per-obliquity results with ground-truth keypoints (E1) and with trained models (E2), including the effect
 of needle parallax on projective rectification (Sec.~\ref{sec:results});
-\item a protocol and tooling for a real-photograph test set with marker-based obliquity labels (E3), whose
-results are pending (Sec.~\ref{sec:real}).
+\item a qualitative transfer test on 298 real photographs, and a protocol with working tooling for a labelled
+real test set with marker-based obliquity labels (Sec.~\ref{sec:real} and~\ref{sec:future}).
 \end{enumerate}
 
 \section{Related Work}
@@ -221,8 +221,9 @@ the fix (Sec.~\ref{sec:discussion}).
 
 \textbf{Experiments.} E1 applies S0--S2 to ground-truth keypoints (S1 uses the ground-truth face outline), then
 adds Gaussian noise of $\sigma=1,2,4$\,px to all seven keypoints, with the same noise for every strategy on an
-image. E2 runs the full trained system. E3 repeats E2 on real photographs and E4 retrains the keypoint and
-regression models with one nuisance disabled at a time (Sec.~\ref{sec:real}).
+image. E2 runs the full trained system. Finally, the trained system is applied to unlabelled real photographs as a
+qualitative transfer test (Sec.~\ref{sec:real}). The labelled real-photograph evaluation and the nuisance ablation
+planned for this project are not part of this report (Sec.~\ref{sec:future}).
 
 \textbf{Metrics.} The mean (MAE) and median of the error in \%\,FS per obliquity bin and overall, the share of
 images within 1 and 2.5\,\%\,FS, and the failure rate. Failures are excluded from the MAE and reported
@@ -325,22 +326,35 @@ by 13.0\,\%\,FS; after affine (S1) or projective (S2) rectification the error is
 \label{fig:rectify}
 \end{figure}
 
-\subsection{E3 and E4}\label{sec:real}
-\textbf{Real test set (E3).} Photographs are taken with calibrated phones (checkerboard calibration~\cite{zhang2000})
-and a 40\,mm ArUco marker~\cite{garridojurado2014} taped coplanar with the dial face; the obliquity label is
-the angle between the marker normal, from planar pose estimation~\cite{collins2014}, and the camera ray through
-the annotated pivot, with an ellipse-based fallback ($\theta\approx\arccos(b/a)$ of the face rim) when the marker
-is unusable. On rendered marker scenes the marker-based label was within $1^\circ$ of the truth from 5 to
-$65^\circ$. Keypoints are annotated in CVAT, and the reading of each gauge state is taken as the mean of two
-independent readings of a frontal reference photograph. The real set is used for testing only.
-The planned size is about 350 images with at least 50 per bin and at least five gauge faces.
-\todo{E3 results: per-bin MAE table for S0--S3 from \texttt{eval.evaluate --split real}, number of images and
-gauges actually collected, and the obliquity-label method counts (ArUco vs.\ ellipse).}
+\subsection{Real photographs: a qualitative transfer test}\label{sec:real}
+To see how the synthetic-trained system behaves on real gauges, we collected all photographs (JPEG or PNG, at least
+600\,px on the short side, excluding diagrams and digital gauges) from nine pressure-gauge and manometer categories
+of Wikimedia Commons~\cite{commons}: 298 images, all under free licences (CC BY, CC BY-SA, CC0 or public domain).
+They have no ground-truth readings, keypoints or obliquity labels, so we report only what can be counted and
+inspected, not accuracy. The detector found a dial in 185 of the 298 images (62\,\%); in the contact sheets we
+inspected, many misses are wide scenes in which the gauge is small, cut-away mechanisms or drawings. Every strategy
+produced a reading for 183--185 of the detected dials; S2 failed its linearity check only once. Passing this check
+shows that the five scale keypoints lie on a consistent ellipse, not that the reading is correct.
 
-\textbf{Nuisance ablation (E4).} Five training sets differ from the default in exactly one setting (no glare,
-no low light, no blur, no shadows, tilt limited to 0--10$^\circ$); each is image-for-image identical to the
-default set except for that effect. \todo{E4 results: real-set MAE of the retrained keypoint and regression
-models per ablation, or remove this paragraph if E4 is cut.}
+Fig.~\ref{fig:web} shows typical cases. On close-up, single-scale gauges the scale keypoints land on the end and
+middle marks and the needle tip is found (Fig.~\ref{fig:web}a,b); the S2 readings, $f=0.871$ on a 0--30 vacuum
+gauge and $f=0.806$ on a 10--35 manifold gauge, agree with the needle positions on visual inspection. Two failure
+modes recur. A secondary pointer, such as a red set-point marker, is taken for the needle
+(Fig.~\ref{fig:web}c), and dials with two concentric scales, such as compound vacuum and pressure gauges, confuse
+the scale keypoints (Fig.~\ref{fig:web}d). The needle tip is the least reliable keypoint, as in the synthetic
+results (Sec.~\ref{sec:results}). Neither failure mode exists in our generator, which renders one needle and one
+scale per dial.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/fig_web.png}
+\caption{The trained system on real photographs from Wikimedia Commons (box: detected dial; green: face outline;
+dots: keypoints, red line: pivot to needle tip). (a, b) close-up single-scale gauges read plausibly; (c) a red
+set-point marker is taken for the needle; (d) a dual-scale compound gauge confuses the scale keypoints.
+Photos: (a) Sasha Taylor, CC BY-SA 4.0; (b) Chopper, public domain; (c) Hannes Grobe, CC BY 3.0;
+(d) VeRdUgO PY, CC BY-SA 4.0.}
+\label{fig:web}
+\end{figure}
 
 \section{Discussion and Limitations}\label{sec:discussion}
 \textbf{Why S2 does not beat S1.} Projective rectification is exact only if the pivot lies on the dial plane.
@@ -355,21 +369,41 @@ every strategy, 29 of them black needles on dark faces, which are practically in
 this combination. The models in Table~\ref{tab:e2} were trained before the fix, so 6.7\,\% of their training
 images had invisible needles; retraining on corrected data may lower the errors slightly.
 
-\textbf{Limitations.} (i) All reported results are synthetic and the test set comes from the same generator as
-the training data, so they measure in-distribution performance; the real-image evaluation (E3) is pending.
+\textbf{Limitations.} (i) All quantitative results are synthetic and the test set comes from the same generator as
+the training data, so they measure in-distribution performance; the real-photograph test is qualitative, has no
+labels, and its images are mostly close to frontal.
 (ii) Each model was trained once, so the intervals do not include training variance. (iii) Obliquity is
 limited to $65^\circ$ and dials are single-pointer and circular with linear scales. (iv) In E1, S1 uses the
 exact face outline, which favours it under keypoint noise. (v) Our demonstration application optionally reads
 the scale range from the printed numerals with OCR~\cite{du2020,rapidocr2021}; this is outside the evaluation,
 and in informal tests on real photographs it often failed to recover the range.
 
+\section{Future Work}\label{sec:future}
+\textbf{Labelled real photographs.} The tooling for a real test set is implemented. Photographs are taken with
+calibrated phones (checkerboard calibration~\cite{zhang2000}) and a 40\,mm ArUco marker~\cite{garridojurado2014}
+taped coplanar with the dial face; the obliquity label is the angle between the marker normal, from planar pose
+estimation~\cite{collins2014}, and the camera ray through the annotated pivot, with an ellipse-based fallback
+($\theta\approx\arccos(b/a)$ of the face rim) when the marker is unusable. On rendered marker scenes this label was
+within $1^\circ$ of the truth from 5 to $65^\circ$. Keypoints are annotated in CVAT and each gauge state is read
+independently by two people from a frontal reference photograph. The planned set has about 350 photographs, at least
+50 per obliquity bin and at least five gauge faces, used for testing only.
+
+\textbf{Nuisance ablation.} Five training sets that differ from the default in exactly one setting (no glare, no low
+light, no blur, no shadows, tilt limited to 0--10$^\circ$), each image-for-image identical to the default set except
+for that effect, are ready for retraining the keypoint and regression models, to find which nuisance matters most for
+real photographs.
+
+\textbf{Generator.} The real-photograph failures suggest adding secondary marker pointers and dual scales to the
+generator, and the S2 analysis suggests predicting more scale points so that the conic fit has redundancy.
+
 \section{Conclusion}
 On synthetic data with exact labels, camera tilt raises the error of an uncorrected keypoint-based reader about
 ninefold between near-frontal and steep views, to about 4\,\%\,FS. Affine ellipse correction, projective
 rectification and direct regression all keep the error near or below 1\,\%\,FS up to $65^\circ$, and the simple
 affine correction is slightly more accurate than the projective one once needle parallax and keypoint errors are
-present. Whether this ranking
-holds on real photographs is the question the pending real-image evaluation will answer.
+present. On real photographs the synthetic-trained system finds most close-up dials and reads clean single-scale
+gauges plausibly, but secondary pointers and dual scales, absent from the synthetic data, cause failures. Whether the
+ranking of the strategies holds on real photographs requires the labelled real-image evaluation described above.
 
 \section*{Acknowledgment}
 This work was carried out as the course project of CS4231 Fundamentals of Computer Vision at RV University. We
@@ -412,6 +446,8 @@ Mar\'in-Jim\'enez, ``Automatic generation and detection of highly reliable fiduc
 Comput. Vis.}, vol.~109, no.~3, pp.~252--286, 2014.
 \bibitem{du2020} Y.~Du \emph{et al.}, ``PP-OCR: A practical ultra lightweight OCR system,'' arXiv:2009.09941,
 2020.
+\bibitem{commons} Wikimedia Commons, ``Category:Pressure gauges'' and ``Category:Manometers.'' [Online]. Available:
+\url{https://commons.wikimedia.org/wiki/Category:Pressure_gauges} (accessed Nov.~2026).
 \bibitem{rapidocr2021} RapidAI Team, ``RapidOCR: OCR toolbox,'' 2021. [Online]. Available:
 \url{https://github.com/RapidAI/RapidOCR}
 \end{thebibliography}
