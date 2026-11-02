@@ -21,3 +21,14 @@ def bootstrap_ci(values, stat: Callable[[np.ndarray], float] = np.mean, resample
     a = (1 - ci) / 2
     lo, hi = np.quantile(stats, [a, 1 - a])
     return float(lo), float(hi)
+
+
+def paired_bootstrap_ci(diffs, resamples: int = 1000, ci: float = 0.95, seed: int = 0,
+                        key: str = "") -> tuple[float, float, float]:
+    """Mean of per-image differences (e.g. error of A minus error of B on the same images) with a percentile CI."""
+    d = np.asarray(diffs, float)
+    d = d[np.isfinite(d)]
+    if len(d) == 0:
+        return float("nan"), float("nan"), float("nan")
+    lo, hi = bootstrap_ci(d, resamples=resamples, ci=ci, seed=seed, key=key)
+    return float(d.mean()), lo, hi

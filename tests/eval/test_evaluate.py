@@ -79,3 +79,17 @@ def test_plots_render(splits, tmp_path):
     out = plots.ablation_bars([run, run], ["a", "b"], tmp_path / "e4.png")
     for p in [*made, out]:
         assert p.stat().st_size > 1000 and p.read_bytes()[:4] == b"\x89PNG"
+
+
+def test_paired_comparison_and_rescore(splits, tmp_path):
+    from eval.evaluate import rescore
+    run = tmp_path / "run"
+    cfg = resolve_run_config(run, _args(splits / "flat"))
+    m1 = evaluate(run, cfg)
+    with open(run / "paired.csv") as fh:
+        rows = {(r["a"], r["b"]): r for r in csv.DictReader(fh)}
+    s0_s2 = rows[("S0", "S2")]                                       # S2 exact on a flat needle: far better than S0
+    assert float(s0_s2["mean_diff"]) < 0 and float(s0_s2["ci_hi"]) < 0 and int(s0_s2["n"]) == 16
+    before = (run / "metrics.csv").read_text()
+    m2 = rescore(run, cfg)                                           # same numbers from predictions.csv alone
+    assert (run / "metrics.csv").read_text() == before and len(m1) == len(m2)

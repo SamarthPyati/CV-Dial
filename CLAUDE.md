@@ -202,3 +202,7 @@ python -m eval.evaluate        --run results/<run_id> --split synth-test|real [-
 - 2026-10-29 — `python -m scripts.demo` = demo with automatic weights: `models.common.latest_weights(name)` picks the
   newest run under results/ whose run.json says "done" and whose weights file exists (smoke runs skipped);
   explicit `--*-weights` win. `pipeline.demo_app` keeps explicit paths only and shares `add_launch_args`/`launch`.
+- 2026-11-02 — `eval.evaluate` also writes `paired.csv` (every strategy pair: mean per-image error difference on images
+  both read, paired bootstrap CI) and supports `--rescore` (rebuild metrics.csv/paired.csv from predictions.csv).
+  CSV floats are written with 17 significant digits so rescoring is exact. Paper numbers come from results/e1_v2,
+  results/e1_flat and results/e2_v2_fixed_needles. Paper: `paper/main.tex` (IEEEtran, compile on Overleaf).

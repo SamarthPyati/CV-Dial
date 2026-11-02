@@ -24,3 +24,6 @@ weights/
 
 # Transfer archives (Kaggle/Colab uploads and downloads)
 /*.zip
+
+# Generated packages (rebuild from paper/ and presentation/)
+paper/*.zip

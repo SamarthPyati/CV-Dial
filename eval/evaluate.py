@@ -5,6 +5,7 @@
 
 Writes into results/<run_id>/: config.yaml (resolved; reused if present), predictions.csv
 (one row per image x strategy x noise level), metrics.csv (one row per strategy x noise x bin, plus 'all'),
+paired.csv (every strategy pair: mean per-image error difference on images both read, with a bootstrap CI),
 and keypoints.csv in pipeline mode (per-keypoint error / dial radius, predicted keypoints in image px).
 
 Oracle mode (E1): S0-S2 on ground-truth keypoints (image px) with seeded Gaussian noise sigma (px) on all 7
@@ -25,7 +26,7 @@ import cv2
 import numpy as np
 import yaml
 
-from eval.bootstrap import bootstrap_ci
+from eval.bootstrap import bootstrap_ci, paired_bootstrap_ci
 from gen.config import apply_overrides, load_config
 from geometry.reading import apply_h
 from geometry.rectify import read_strategy
@@ -140,12 +141,36 @@ def metrics(rows: list[dict], cfg: dict) -> list[dict]:
     return out
 
 
+PAIRED_FIELDS = ["a", "b", "kp_noise", "n", "mean_diff", "ci_lo", "ci_hi"]
+
+
+def paired(rows: list[dict], cfg: dict) -> list[dict]:
+    """Paired comparison of every strategy pair on the images where both succeeded:
+    mean of error(b) - error(a) in %FS with a bootstrap CI (negative = b is more accurate)."""
+    by = {}
+    for r in rows:
+        if r["status"] == "ok":
+            by.setdefault((r["kp_noise"], r["id"]), {})[r["strategy"]] = float(r["error"])
+    out = []
+    strategies = sorted({r["strategy"] for r in rows})
+    for sigma in sorted({r["kp_noise"] for r in rows}):
+        for i, a in enumerate(strategies):
+            for b in strategies[i + 1:]:
+                d = [e[b] - e[a] for (s, _), e in by.items() if s == sigma and a in e and b in e]
+                if not d:
+                    continue
+                mean, lo, hi = paired_bootstrap_ci(d, cfg["bootstrap"]["resamples"], cfg["bootstrap"]["ci"],
+                                                   cfg["seed"], key=f"paired|{a}|{b}|{sigma}")
+                out.append({"a": a, "b": b, "kp_noise": sigma, "n": len(d), "mean_diff": mean, "ci_lo": lo, "ci_hi": hi})
+    return out
+
+
 def write_csv(path: Path, rows: list[dict], fields: list[str]) -> None:
     with open(path, "w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=fields, extrasaction="ignore")
         w.writeheader()
         for r in rows:
-            w.writerow({k: (f"{v:.6g}" if isinstance(v, float) else v) for k, v in r.items()})
+            w.writerow({k: (f"{float(v):.17g}" if isinstance(v, float) else v) for k, v in r.items()})
 
 
 def resolve_run_config(run: Path, args) -> dict:
@@ -179,11 +204,27 @@ def evaluate(run: Path, cfg: dict) -> list[dict]:
     else:
         rows, kp_rows = pipeline_rows(recs, split_dir, cfg)
     write_csv(run / "predictions.csv", rows, PRED_FIELDS)
-    m = metrics(rows, cfg)
-    write_csv(run / "metrics.csv", m, METRIC_FIELDS + [f"within_{t:g}" for t in cfg["tolerances_fs"]])
     if kp_rows:
         write_csv(run / "keypoints.csv", kp_rows, ["id", "bin"] + [f"err_k{i}" for i in range(7)] + ["kp_pred"])
+    return score(run, rows, cfg)
+
+
+def score(run: Path, rows: list[dict], cfg: dict) -> list[dict]:
+    """Write metrics.csv and paired.csv from prediction rows; returns the metrics."""
+    m = metrics(rows, cfg)
+    write_csv(run / "metrics.csv", m, METRIC_FIELDS + [f"within_{t:g}" for t in cfg["tolerances_fs"]])
+    write_csv(run / "paired.csv", paired(rows, cfg), PAIRED_FIELDS)
     return m
+
+
+def rescore(run: Path, cfg: dict) -> list[dict]:
+    """Recompute metrics.csv and paired.csv from an existing predictions.csv (no models are run)."""
+    with open(run / "predictions.csv") as fh:
+        rows = list(csv.DictReader(fh))
+    for r in rows:
+        for k in ("kp_noise", "obliquity_deg", "f_true", "f_pred", "error", "linearity_error", "ms"):
+            r[k] = float(r[k]) if r[k] not in ("", "nan") else float("nan")
+    return score(run, rows, cfg)
 
 
 def format_metrics(m: list[dict]) -> str:
@@ -206,10 +247,11 @@ def main() -> None:
     ap.add_argument("--regress-weights")
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--set", nargs="*", default=[], metavar="KEY=VALUE")
+    ap.add_argument("--rescore", action="store_true", help="recompute metrics/paired from the run's predictions.csv")
     a = ap.parse_args()
     run = Path(a.run)
     cfg = resolve_run_config(run, a)
-    m = evaluate(run, cfg)
+    m = rescore(run, cfg) if a.rescore else evaluate(run, cfg)
     print(format_metrics(m))
     print(f"wrote {run / 'metrics.csv'}")
 
